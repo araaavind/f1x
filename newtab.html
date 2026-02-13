@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>F1 Dashboard</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="bg-gradient"></div>
+  <div class="bg-grid"></div>
+
+  <!-- Main Container -->
+  <div class="dashboard">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="logo.png" alt="F1 Logo" class="logo-icon">
+        <div class="logo-text">
+          <span class="logo-title">Dashboard</span>
+          <span class="logo-subtitle" id="last-updated">Loading...</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="live-badge hidden" id="live-indicator">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <button class="icon-btn" id="settings-btn" title="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Widget Grid - 4 columns -->
+    <div class="widget-grid">
+      <!-- Row 1 -->
+      <div class="widget widget-countdown" id="next-race-widget">
+        <div class="widget-label">NEXT RACE</div>
+        <div class="widget-body" id="next-race-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+
+      <div class="widget widget-fav-driver" id="favorite-driver-widget">
+        <div class="widget-label">
+          <span>MY DRIVER</span>
+          <button class="btn-link" id="change-driver-btn">Change</button>
+        </div>
+        <div class="widget-body" id="favorite-driver-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+
+      <div class="widget widget-fav-team" id="favorite-team-widget">
+        <div class="widget-label">
+          <span>MY TEAM</span>
+          <button class="btn-link" id="change-team-btn">Change</button>
+        </div>
+        <div class="widget-body" id="favorite-team-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+
+      <div class="widget widget-session" id="live-session-widget">
+        <div class="widget-label">SESSION</div>
+        <div class="widget-body" id="session-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="widget widget-drivers" id="driver-standings-widget">
+        <div class="widget-label">
+          <span>DRIVERS</span>
+          <span class="year-badge" id="standings-year">2026</span>
+        </div>
+        <div class="widget-body scrollable" id="drivers-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+
+      <div class="widget widget-constructors" id="constructor-standings-widget">
+        <div class="widget-label">
+          <span>CONSTRUCTORS</span>
+          <span class="year-badge" id="constructors-year">2026</span>
+        </div>
+        <div class="widget-body scrollable" id="constructors-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+
+      <div class="widget widget-calendar" id="calendar-widget">
+        <div class="widget-label">
+          <span>CALENDAR</span>
+          <span class="year-badge" id="calendar-year">2026</span>
+        </div>
+        <div class="widget-body scrollable" id="calendar-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settings-modal">
+    <div class="modal-overlay" data-close="settings"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="icon-btn" data-close="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Favorite Driver</label>
+          <select id="favorite-driver-select">
+            <option value="">Select driver...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Favorite Constructor</label>
+          <select id="favorite-constructor-select">
+            <option value="">Select team...</option>
+          </select>
+        </div>
+        <button class="btn-primary" id="save-settings-btn">Save Preferences</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Driver Selection Modal -->
+  <div class="modal" id="driver-select-modal">
+    <div class="modal-overlay" data-close="driver-select"></div>
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h2>Select Your Driver</h2>
+        <button class="icon-btn" data-close="driver-select">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="driver-picker" id="driver-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Selection Modal -->
+  <div class="modal" id="team-select-modal">
+    <div class="modal-overlay" data-close="team-select"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Select Your Team</h2>
+        <button class="icon-btn" data-close="team-select">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="team-picker" id="team-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/widgets.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
