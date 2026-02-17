@@ -18,6 +18,69 @@ const CACHE_DURATION = {
 // In-memory cache
 const cache = new Map();
 
+// localStorage cache prefix
+const CACHE_PREFIX = 'f1x_cache_';
+
+/**
+ * Read a cache entry, checking in-memory first, then localStorage
+ */
+function cacheGet(key) {
+  // In-memory hit
+  if (cache.has(key)) return cache.get(key);
+
+  // localStorage fallback
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    if (raw) {
+      const entry = JSON.parse(raw);
+      // Hydrate into in-memory cache for faster subsequent reads
+      cache.set(key, entry);
+      return entry;
+    }
+  } catch (e) {
+    // Corrupted entry — remove it
+    localStorage.removeItem(CACHE_PREFIX + key);
+  }
+  return undefined;
+}
+
+/**
+ * Write a cache entry to both in-memory and localStorage
+ */
+function cacheSet(key, entry) {
+  cache.set(key, entry);
+  try {
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry));
+  } catch (e) {
+    // Storage full — clear old f1x entries and retry once
+    clearExpiredCache();
+    try {
+      localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry));
+    } catch (_) { /* give up silently */ }
+  }
+}
+
+/**
+ * Remove expired f1x cache entries from localStorage
+ */
+function clearExpiredCache() {
+  const now = Date.now();
+  const maxAge = Math.max(...Object.values(CACHE_DURATION)); // longest TTL
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(CACHE_PREFIX)) {
+      try {
+        const entry = JSON.parse(localStorage.getItem(k));
+        if (now - entry.timestamp > maxAge) {
+          localStorage.removeItem(k);
+        }
+      } catch (_) {
+        localStorage.removeItem(k);
+      }
+    }
+  }
+}
+
 // Active season state
 let activeSeason = new Date().getFullYear();
 
@@ -63,8 +126,8 @@ async function processRequestQueue() {
       }
       const data = await response.json();
       
-      // Store in cache
-      cache.set(fullCacheKey, { data, timestamp: Date.now() });
+      // Store in cache (in-memory + localStorage)
+      cacheSet(fullCacheKey, { data, timestamp: Date.now() });
       
       resolve(data);
     } catch (error) {
@@ -98,8 +161,8 @@ async function fetchAPI(endpoint, params = {}, cacheKey = null, cacheDuration = 
 
   const fullCacheKey = cacheKey || url.toString();
   
-  // Check cache first
-  const cached = cache.get(fullCacheKey);
+  // Check cache first (in-memory, then localStorage)
+  const cached = cacheGet(fullCacheKey);
   if (cached && Date.now() - cached.timestamp < cacheDuration) {
     return cached.data;
   }
@@ -296,15 +359,132 @@ async function getNextMeeting() {
 }
 
 /**
+ * Circuit SVG mapping: circuit_short_name (from OpenF1) -> layoutId (from f1-circuits-svg repo)
+ * Uses the latest layout for each circuit that covers the 2024-2026 seasons
+ */
+const circuitSvgMap = {
+  'bahrain': 'bahrain-1',
+  'sakhir': 'bahrain-1',
+  'jeddah': 'jeddah-1',
+  'albert park': 'melbourne-2',
+  'melbourne': 'melbourne-2',
+  'suzuka': 'suzuka-2',
+  'shanghai': 'shanghai-1',
+  'miami': 'miami-1',
+  'imola': 'imola-3',
+  'monaco': 'monaco-5',
+  'montreal': 'montreal-6',
+  'villeneuve': 'montreal-6',
+  'barcelona': 'catalunya-6',
+  'catalunya': 'catalunya-6',
+  'spielberg': 'spielberg-3',
+  'red bull ring': 'spielberg-3',
+  'silverstone': 'silverstone-8',
+  'hungaroring': 'hungaroring-3',
+  'spa-francorchamps': 'spa-francorchamps-4',
+  'spa': 'spa-francorchamps-4',
+  'zandvoort': 'zandvoort-5',
+  'monza': 'monza-6',
+  'baku': 'baku-1',
+  'marina bay': 'marina-bay-4',
+  'singapore': 'marina-bay-4',
+  'austin': 'austin-1',
+  'cota': 'austin-1',
+  'mexico city': 'mexico-city-3',
+  'hermanos rodriguez': 'mexico-city-3',
+  'interlagos': 'interlagos-2',
+  'sao paulo': 'interlagos-2',
+  'são paulo': 'interlagos-2',
+  'las vegas': 'las-vegas-1',
+  'lusail': 'lusail-1',
+  'yas marina': 'yas-marina-2',
+  'yas island': 'yas-marina-2',
+  'madrid': 'madring-1',
+  'portimao': 'portimao-1',
+  'istanbul': 'istanbul-1',
+  'istanbul park': 'istanbul-1',
+  'paul ricard': 'paul-ricard-3',
+  'mugello': 'mugello-1',
+  'nurburgring': 'nurburgring-4',
+  'nürburgring': 'nurburgring-4',
+  'hockenheim': 'hockenheimring-4',
+  'hockenheimring': 'hockenheimring-4',
+  'sepang': 'sepang-1',
+  'buddh': 'buddh-1',
+  'valencia': 'valencia-1',
+  'yeongam': 'yeongam-1',
+  'sochi': 'sochi-1',
+};
+
+/**
+ * Fallback mapping from meeting_name keywords to layoutId
+ */
+const meetingCircuitMap = {
+  'bahrain': 'bahrain-1',
+  'saudi': 'jeddah-1',
+  'australian': 'melbourne-2',
+  'japanese': 'suzuka-2',
+  'chinese': 'shanghai-1',
+  'miami': 'miami-1',
+  'emilia': 'imola-3',
+  'monaco': 'monaco-5',
+  'canadian': 'montreal-6',
+  'spanish': 'catalunya-6',
+  'austrian': 'spielberg-3',
+  'british': 'silverstone-8',
+  'hungarian': 'hungaroring-3',
+  'belgian': 'spa-francorchamps-4',
+  'dutch': 'zandvoort-5',
+  'italian': 'monza-6',
+  'azerbaijan': 'baku-1',
+  'singapore': 'marina-bay-4',
+  'united states': 'austin-1',
+  'mexico': 'mexico-city-3',
+  'são paulo': 'interlagos-2',
+  'sao paulo': 'interlagos-2',
+  'brazilian': 'interlagos-2',
+  'las vegas': 'las-vegas-1',
+  'qatar': 'lusail-1',
+  'abu dhabi': 'yas-marina-2',
+  'madrid': 'madring-1',
+};
+
+/**
+ * Get the local circuit SVG path for a given circuit short name and/or meeting name
+ */
+function getCircuitSvgUrl(circuitShortName, meetingName) {
+  if (circuitShortName) {
+    const key = circuitShortName.toLowerCase().trim();
+    if (circuitSvgMap[key]) {
+      return `circuits/${circuitSvgMap[key]}.svg`;
+    }
+    // Try partial match on circuit name
+    const partialKey = Object.keys(circuitSvgMap).find(k => key.includes(k) || k.includes(key));
+    if (partialKey) {
+      return `circuits/${circuitSvgMap[partialKey]}.svg`;
+    }
+  }
+  // Fallback: try matching by meeting name
+  if (meetingName) {
+    const nameLower = meetingName.toLowerCase();
+    const meetingKey = Object.keys(meetingCircuitMap).find(k => nameLower.includes(k));
+    if (meetingKey) {
+      return `circuits/${meetingCircuitMap[meetingKey]}.svg`;
+    }
+  }
+  return null;
+}
+
+/**
  * Country code to flag emoji mapping
  */
 const countryFlags = {
-  'BHR': '🇧🇭', 'SAU': '🇸🇦', 'AUS': '🇦🇺', 'JPN': '🇯🇵', 'CHN': '🇨🇳',
+  'BHR': '🇧🇭', 'BRN': '🇧🇭', 'SAU': '🇸🇦', 'KSA': '🇸🇦', 'AUS': '🇦🇺',
   'USA': '🇺🇸', 'ITA': '🇮🇹', 'MON': '🇲🇨', 'CAN': '🇨🇦', 'ESP': '🇪🇸',
   'AUT': '🇦🇹', 'GBR': '🇬🇧', 'HUN': '🇭🇺', 'BEL': '🇧🇪', 'NLD': '🇳🇱',
   'AZE': '🇦🇿', 'SGP': '🇸🇬', 'MEX': '🇲🇽', 'BRA': '🇧🇷', 'QAT': '🇶🇦',
   'UAE': '🇦🇪', 'ABU': '🇦🇪', 'NED': '🇳🇱', 'MIA': '🇺🇸', 'LVG': '🇺🇸',
-  'EMI': '🇮🇹',
+  'EMI': '🇮🇹', 'JPN': '🇯🇵', 'CHN': '🇨🇳',
 };
 
 function getCountryFlag(countryCode) {
@@ -376,12 +556,12 @@ function getTeamColor(teamName, apiColor = null) {
 async function getDriverStandings(year = null) {
   const season = year || activeSeason;
   const cacheKey = `driver_standings_${season}`;
-  const cached = cache.get(cacheKey);
-  
+  const cached = cacheGet(cacheKey);
+
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION.meetings) {
     return cached.data;
   }
-  
+
   try {
     const response = await fetch(`${JOLPICA_API_BASE}/${season}/driverstandings.json`);
     if (!response.ok) {
@@ -389,8 +569,8 @@ async function getDriverStandings(year = null) {
     }
     const data = await response.json();
     const standings = data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings || [];
-    
-    cache.set(cacheKey, { data: standings, timestamp: Date.now() });
+
+    cacheSet(cacheKey, { data: standings, timestamp: Date.now() });
     return standings;
   } catch (error) {
     console.error('Error fetching driver standings:', error);
@@ -408,12 +588,12 @@ async function getDriverStandings(year = null) {
 async function getConstructorStandings(year = null) {
   const season = year || activeSeason;
   const cacheKey = `constructor_standings_${season}`;
-  const cached = cache.get(cacheKey);
-  
+  const cached = cacheGet(cacheKey);
+
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION.meetings) {
     return cached.data;
   }
-  
+
   try {
     const response = await fetch(`${JOLPICA_API_BASE}/${season}/constructorstandings.json`);
     if (!response.ok) {
@@ -421,8 +601,8 @@ async function getConstructorStandings(year = null) {
     }
     const data = await response.json();
     const standings = data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
-    
-    cache.set(cacheKey, { data: standings, timestamp: Date.now() });
+
+    cacheSet(cacheKey, { data: standings, timestamp: Date.now() });
     return standings;
   } catch (error) {
     console.error('Error fetching constructor standings:', error);
@@ -447,6 +627,7 @@ window.F1API = {
   getUpcomingMeetings,
   getNextMeeting,
   getCountryFlag,
+  getCircuitSvgUrl,
   getTeamColor,
   getTeamLogo,
   getDriverStandings,

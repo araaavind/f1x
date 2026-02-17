@@ -51,7 +51,7 @@ async function renderNextRaceWidget() {
     }
     
     const next = upcoming[0];
-    const flag = F1API.getCountryFlag(next.country_code);
+    const circuitSvgUrl = F1API.getCircuitSvgUrl(next.circuit_short_name, next.meeting_name);
     
     // Fetch sessions for this meeting
     let sessions = [];
@@ -93,9 +93,9 @@ async function renderNextRaceWidget() {
       });
     });
     
-    // Sort days by typical race weekend order
+    // Sort days by their earliest session date (ascending)
     const sortedDays = Object.keys(sessionsByDay).sort((a, b) => {
-      return dayOrder.indexOf(a) - dayOrder.indexOf(b);
+      return sessionsByDay[a][0].date - sessionsByDay[b][0].date;
     });
     
     // Build session schedule HTML
@@ -127,7 +127,9 @@ async function renderNextRaceWidget() {
     content.innerHTML = `
       <div class="next-race-layout">
         <div class="race-info-column">
-          <div class="race-flag-large">${flag}</div>
+          ${circuitSvgUrl
+            ? `<img src="${circuitSvgUrl}" alt="" class="race-circuit-small">`
+            : `<div class="race-flag-large">${F1API.getCountryFlag(next.country_code)}</div>`}
           <div class="race-country">${raceName}</div>
           <div class="race-city">${location}</div>
           <div class="race-date-range">${dateRange}</div>
@@ -376,17 +378,19 @@ async function renderLiveSessionWidget() {
     }
     
     const isLive = F1API.isSessionLive(session);
-    const flag = F1API.getCountryFlag(session.country_code);
-    
+    const sessionCircuitUrl = F1API.getCircuitSvgUrl(session.circuit_short_name, null);
+
     if (isLive) {
       liveIndicator.classList.remove('hidden');
     } else {
       liveIndicator.classList.add('hidden');
     }
-    
+
     content.innerHTML = `
       <div class="session-content">
-        <div style="font-size: 24px; margin-bottom: 6px">${flag}</div>
+        ${sessionCircuitUrl
+          ? `<img src="${sessionCircuitUrl}" alt="" class="session-circuit-bg">`
+          : `<div style="font-size: 24px; margin-bottom: 6px">${F1API.getCountryFlag(session.country_code)}</div>`}
         <div class="session-title">${session.circuit_short_name}</div>
         <div class="session-subtitle">${session.session_name}${isLive ? ' • LIVE' : ''}</div>
       </div>
@@ -541,7 +545,12 @@ async function renderCalendarWidget() {
     const now = new Date();
     const sorted = [...meetings].sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
     const nextIdx = sorted.findIndex(m => new Date(m.date_start) > now);
-    
+    const hasOngoing = sorted.some(m => {
+      const start = new Date(m.date_start);
+      const end = m.date_end ? new Date(m.date_end) : new Date(start.getTime() + 3 * 24 * 60 * 60 * 1000);
+      return now >= start && now <= end;
+    });
+
     content.innerHTML = sorted.map((m, i) => {
       const flag = F1API.getCountryFlag(m.country_code);
       const date = new Date(m.date_start);
@@ -550,13 +559,19 @@ async function renderCalendarWidget() {
       let badgeClass = 'upcoming';
       let badgeText = 'Upcoming';
       let rowClass = '';
-      
-      if (i < nextIdx || (nextIdx === -1)) {
+
+      const meetingStart = new Date(m.date_start);
+      const meetingEnd = m.date_end ? new Date(m.date_end) : new Date(meetingStart.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+      if (now >= meetingStart && now <= meetingEnd) {
+        badgeClass = 'ongoing';
+        badgeText = 'On-Going';
+        rowClass = 'is-ongoing';
+      } else if (i < nextIdx || (nextIdx === -1)) {
         badgeClass = 'done';
         badgeText = 'Done';
         rowClass = 'is-completed';
-      }
-      if (i === nextIdx) {
+      } else if (i === nextIdx && !hasOngoing) {
         badgeClass = 'next';
         badgeText = 'Next';
         rowClass = 'is-next';
