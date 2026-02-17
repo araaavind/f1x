@@ -451,28 +451,32 @@ const meetingCircuitMap = {
 
 /**
  * Get the local circuit SVG path for a given circuit short name and/or meeting name
+ * @param {string} circuitShortName - Circuit short name from OpenF1
+ * @param {string} meetingName - Meeting name fallback
+ * @param {'white'|'white-outline'|'black'|'black-outline'} variant - SVG style variant
  */
-function getCircuitSvgUrl(circuitShortName, meetingName) {
+function getCircuitSvgUrl(circuitShortName, meetingName, variant = 'white') {
+  let layoutId = null;
+
   if (circuitShortName) {
     const key = circuitShortName.toLowerCase().trim();
     if (circuitSvgMap[key]) {
-      return `circuits/${circuitSvgMap[key]}.svg`;
-    }
-    // Try partial match on circuit name
-    const partialKey = Object.keys(circuitSvgMap).find(k => key.includes(k) || k.includes(key));
-    if (partialKey) {
-      return `circuits/${circuitSvgMap[partialKey]}.svg`;
+      layoutId = circuitSvgMap[key];
+    } else {
+      // Try partial match on circuit name
+      const partialKey = Object.keys(circuitSvgMap).find(k => key.includes(k) || k.includes(key));
+      if (partialKey) layoutId = circuitSvgMap[partialKey];
     }
   }
+
   // Fallback: try matching by meeting name
-  if (meetingName) {
+  if (!layoutId && meetingName) {
     const nameLower = meetingName.toLowerCase();
     const meetingKey = Object.keys(meetingCircuitMap).find(k => nameLower.includes(k));
-    if (meetingKey) {
-      return `circuits/${meetingCircuitMap[meetingKey]}.svg`;
-    }
+    if (meetingKey) layoutId = meetingCircuitMap[meetingKey];
   }
-  return null;
+
+  return layoutId ? `circuits/${variant}/${layoutId}.svg` : null;
 }
 
 /**

@@ -645,7 +645,7 @@ body {
   font-weight: 700;
   color: var(--accent-amber);
   letter-spacing: 1px;
-  margin-top: 8px;
+  margin-top: 12px;
   margin-bottom: 5px;
   padding-left: 8px;
   border-left: 2px solid rgba(255, 140, 0, 0.3);

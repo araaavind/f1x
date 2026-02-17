@@ -378,7 +378,7 @@ async function renderLiveSessionWidget() {
     }
     
     const isLive = F1API.isSessionLive(session);
-    const sessionCircuitUrl = F1API.getCircuitSvgUrl(session.circuit_short_name, null);
+    const sessionCircuitUrl = F1API.getCircuitSvgUrl(session.circuit_short_name, null, 'white-outline');
 
     if (isLive) {
       liveIndicator.classList.remove('hidden');
