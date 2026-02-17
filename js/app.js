@@ -3,6 +3,10 @@
  * CSP compliant - using event delegation instead of inline handlers
  */
 
+// Track pending wallpaper state within settings modal
+let pendingWallpaperData = null;
+let pendingWallpaperType = null;
+
 async function initDashboard() {
   console.log('🏎️ F1 Dashboard starting...');
   updateStatus('Loading...');
@@ -12,6 +16,9 @@ async function initDashboard() {
 
   // Set up all event listeners first
   setupEventListeners();
+
+  // Restore wallpaper before anything renders
+  await restoreWallpaper();
 
   // Autofocus search bar
   document.getElementById('search-input').focus();
@@ -123,6 +130,145 @@ function setupEventListeners() {
       return;
     }
   });
+
+  // ===== WALLPAPER / THEME SETTINGS =====
+  setupWallpaperListeners();
+}
+
+function setupWallpaperListeners() {
+  // Theme toggle buttons
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-theme]');
+    if (!btn) return;
+    
+    const theme = btn.getAttribute('data-theme');
+    themeToggle.querySelectorAll('.theme-option').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    const wallpaperOptions = document.getElementById('wallpaper-options');
+    if (theme === 'wallpaper') {
+      wallpaperOptions.classList.add('visible');
+    } else {
+      wallpaperOptions.classList.remove('visible');
+    }
+  });
+
+  // File upload zone - click
+  const uploadZone = document.getElementById('file-upload-zone');
+  const fileInput = document.getElementById('wallpaper-file-input');
+  
+  uploadZone.addEventListener('click', () => fileInput.click());
+
+  // File input change
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleFileUpload(file);
+  });
+
+  // Drag and drop
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('drag-over');
+  });
+
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('drag-over');
+  });
+
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleFileUpload(file);
+    }
+  });
+
+  // URL input - load preview on blur or Enter
+  const urlInput = document.getElementById('wallpaper-url-input');
+  urlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleUrlInput(urlInput.value.trim());
+    }
+  });
+  urlInput.addEventListener('blur', () => {
+    const url = urlInput.value.trim();
+    if (url) handleUrlInput(url);
+  });
+
+  // Remove wallpaper button
+  document.getElementById('wallpaper-remove-btn').addEventListener('click', () => {
+    clearPendingWallpaper();
+  });
+}
+
+function handleFileUpload(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const base64 = e.target.result;
+    pendingWallpaperData = base64;
+    pendingWallpaperType = 'file';
+    showWallpaperPreview(base64);
+    // Clear URL input since file was chosen
+    document.getElementById('wallpaper-url-input').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleUrlInput(url) {
+  if (!url) return;
+  pendingWallpaperData = url;
+  pendingWallpaperType = 'url';
+  showWallpaperPreview(url);
+}
+
+function showWallpaperPreview(src) {
+  const preview = document.getElementById('wallpaper-preview');
+  const previewImg = document.getElementById('wallpaper-preview-img');
+  previewImg.src = src;
+  preview.classList.add('visible');
+}
+
+function clearPendingWallpaper() {
+  pendingWallpaperData = null;
+  pendingWallpaperType = null;
+  const preview = document.getElementById('wallpaper-preview');
+  preview.classList.remove('visible');
+  document.getElementById('wallpaper-preview-img').src = '';
+  document.getElementById('wallpaper-url-input').value = '';
+  document.getElementById('wallpaper-file-input').value = '';
+}
+
+function applyWallpaper(imageData) {
+  const wallpaperEl = document.querySelector('.bg-wallpaper');
+  if (wallpaperEl) {
+    wallpaperEl.style.backgroundImage = `url('${imageData}')`;
+  }
+  document.body.classList.add('wallpaper-mode');
+}
+
+function removeWallpaper() {
+  document.body.classList.remove('wallpaper-mode');
+  const wallpaperEl = document.querySelector('.bg-wallpaper');
+  if (wallpaperEl) {
+    wallpaperEl.style.backgroundImage = 'none';
+  }
+}
+
+async function restoreWallpaper() {
+  try {
+    const themeMode = await F1Storage.loadThemeMode();
+    if (themeMode === 'wallpaper') {
+      const { data } = await F1Storage.loadWallpaper();
+      if (data) {
+        applyWallpaper(data);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to restore wallpaper:', e);
+  }
 }
 
 function updateStatus(msg) {
@@ -152,11 +298,41 @@ async function refreshDashboard() {
 }
 
 function openSettings() {
+  // Sync UI state with current settings before opening
+  syncSettingsUI();
   document.getElementById('settings-modal').classList.add('active');
 }
 
 function closeSettings() {
   document.getElementById('settings-modal').classList.remove('active');
+}
+
+async function syncSettingsUI() {
+  const themeMode = await F1Storage.loadThemeMode();
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-theme') === themeMode);
+  });
+
+  const wallpaperOptions = document.getElementById('wallpaper-options');
+  if (themeMode === 'wallpaper') {
+    wallpaperOptions.classList.add('visible');
+    // Load existing wallpaper preview
+    const { data, type } = await F1Storage.loadWallpaper();
+    if (data) {
+      pendingWallpaperData = data;
+      pendingWallpaperType = type;
+      showWallpaperPreview(data);
+      if (type === 'url') {
+        document.getElementById('wallpaper-url-input').value = data;
+      }
+    } else {
+      clearPendingWallpaper();
+    }
+  } else {
+    wallpaperOptions.classList.remove('visible');
+    clearPendingWallpaper();
+  }
 }
 
 async function populateSettings() {
@@ -203,6 +379,24 @@ async function saveSettings() {
   
   await F1Storage.saveFavoriteDriver(driverVal ? parseInt(driverVal) : null);
   await F1Storage.saveFavoriteConstructor(teamVal || null);
+
+  // Save theme settings
+  const activeTheme = document.querySelector('.theme-option.active');
+  const themeMode = activeTheme ? activeTheme.getAttribute('data-theme') : 'default';
+  await F1Storage.saveThemeMode(themeMode);
+
+  if (themeMode === 'wallpaper' && pendingWallpaperData) {
+    await F1Storage.saveWallpaper(pendingWallpaperData, pendingWallpaperType);
+    applyWallpaper(pendingWallpaperData);
+  } else if (themeMode === 'wallpaper' && !pendingWallpaperData) {
+    // Wallpaper mode selected but no image — clear and revert
+    await F1Storage.clearWallpaper();
+    removeWallpaper();
+  } else {
+    // Default theme
+    await F1Storage.clearWallpaper();
+    removeWallpaper();
+  }
   
   closeSettings();
   

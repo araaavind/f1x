@@ -66,6 +66,28 @@ body {
 }
 
 /* ===== BACKGROUND ATMOSPHERE ===== */
+/* Wallpaper Background (image set via JS) */
+.bg-wallpaper {
+  position: fixed;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: none;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.bg-wallpaper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.643);
+  pointer-events: none;
+}
+
 .bg-gradient {
   position: fixed;
   inset: 0;
@@ -312,7 +334,7 @@ body {
 .clock-date {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: #c8c8c8;
   letter-spacing: 0.3px;
 }
 
@@ -1999,6 +2021,261 @@ body {
 .team-pick-name {
   font-size: 12px;
   font-weight: 600;
+}
+
+/* ===== SETTINGS MODAL EXTENDED ===== */
+.modal-settings {
+  max-width: 420px;
+}
+
+.settings-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-subtle),
+    transparent
+  );
+  margin: 20px 0;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.theme-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+}
+
+.theme-option:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.theme-option.active {
+  background: rgba(225, 6, 0, 0.1);
+  border-color: var(--f1-red);
+  color: var(--f1-red);
+  box-shadow: 0 0 12px rgba(225, 6, 0, 0.1);
+}
+
+.theme-option svg {
+  flex-shrink: 0;
+}
+
+/* Wallpaper Options Panel */
+.wallpaper-options {
+  display: none;
+  animation: slideDown 0.3s var(--ease-out);
+}
+
+.wallpaper-options.visible {
+  display: block;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Input */
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:focus {
+  border-color: var(--f1-red);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
+}
+
+/* File Upload Zone */
+.file-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 2px dashed var(--border-light);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.file-upload-zone:hover {
+  border-color: var(--f1-red);
+  background: rgba(225, 6, 0, 0.04);
+  color: var(--text-secondary);
+}
+
+.file-upload-zone.drag-over {
+  border-color: var(--f1-red);
+  background: rgba(225, 6, 0, 0.08);
+  box-shadow: 0 0 16px rgba(225, 6, 0, 0.1);
+}
+
+.upload-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.upload-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Wallpaper Preview */
+.wallpaper-preview {
+  display: none;
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.wallpaper-preview.visible {
+  display: block;
+  animation: fadeIn 0.3s var(--ease-out);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.wallpaper-preview img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.wallpaper-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wallpaper-remove-btn:hover {
+  background: var(--f1-red);
+  border-color: var(--f1-red);
+}
+
+.wallpaper-remove-btn svg {
+  width: 14px;
+  height: 14px;
+  color: #fff;
+}
+
+/* ===== WALLPAPER MODE ===== */
+/* When body has .wallpaper-mode, modify everything for wallpaper visibility */
+
+body.wallpaper-mode .bg-gradient,
+body.wallpaper-mode .bg-grid,
+body.wallpaper-mode .bg-noise,
+body.wallpaper-mode .bg-orb {
+  display: none !important;
+}
+
+body.wallpaper-mode .bg-wallpaper {
+  opacity: 1;
+}
+
+/* Make widgets more transparent to let wallpaper show through */
+body.wallpaper-mode .widget {
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 15, 0.55) 0%,
+    rgba(10, 10, 15, 0.5) 100%
+  );
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.wallpaper-mode .widget:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 15, 0.6) 0%,
+    rgba(10, 10, 15, 0.55) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Header transparency */
+body.wallpaper-mode .header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Search bar */
+body.wallpaper-mode .search-input {
+  background: rgba(10, 10, 15, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+body.wallpaper-mode .search-input:hover,
+body.wallpaper-mode .search-input:focus {
+  background: rgba(10, 10, 15, 0.55);
+}
+
+/* Widget labels */
+body.wallpaper-mode .widget-label {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
 }
 
 /* ===== RESPONSIVE ===== */

@@ -1,222 +1,331 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Tab</title>
-  <link rel="icon" type="image/png" href="logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <!-- Background Effects -->
-  <div class="bg-gradient"></div>
-  <div class="bg-grid"></div>
-  <div class="bg-noise"></div>
-  <div class="bg-orb bg-orb-1"></div>
-  <div class="bg-orb bg-orb-2"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Tab</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Background Effects -->
+    <div class="bg-wallpaper"></div>
+    <div class="bg-gradient"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-noise"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
 
-  <!-- Main Container -->
-  <div class="dashboard">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo">
-        <img src="logo.png" alt="F1 Logo" class="logo-icon">
-        <div class="logo-text">
-          <span class="logo-title">Dashboard</span>
-          <span class="logo-subtitle" id="last-updated">Loading...</span>
-        </div>
-      </div>
-      <div class="search-container">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="search-input" class="search-input" placeholder="Search the web..." autocomplete="off" autofocus>
-      </div>
-      <div class="header-right">
-        <div class="clock" id="clock">
-          <span class="clock-time" id="clock-time"></span>
-          <span class="clock-date" id="clock-date"></span>
-        </div>
-        <div class="live-badge hidden" id="live-indicator">
-          <span class="live-dot"></span>
-          <span>LIVE</span>
-        </div>
-        <button class="icon-btn" id="settings-btn" title="Settings">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-      </div>
-    </header>
-
-    <!-- Widget Grid - 4 columns -->
-    <div class="widget-grid">
-      <!-- Row 1 -->
-
-      <div class="widget widget-session" id="live-session-widget">
-        <div class="widget-label">SESSION</div>
-        <div class="widget-body" id="session-content">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
-
-      <div class="widget widget-live-standings" id="live-standings-widget">
-        <div class="widget-label">
-          <span>LIVE STANDINGS</span>
-        </div>
-        <div class="widget-body" id="live-standings-content">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
-      
-      <div class="widget widget-favorites" id="favorites-widget">
-        <div class="widget-label">
-          <span>MY FAVORITES</span>
-          <div class="fav-header-actions">
-            <button class="btn-link" id="change-driver-btn">Driver</button>
-            <span class="fav-header-sep">/</span>
-            <button class="btn-link" id="change-team-btn">Team</button>
+    <!-- Main Container -->
+    <div class="dashboard">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <img src="logo.png" alt="F1 Logo" class="logo-icon" />
+          <div class="logo-text">
+            <span class="logo-title">Dashboard</span>
+            <span class="logo-subtitle" id="last-updated">Loading...</span>
           </div>
         </div>
-        <div class="widget-body favorites-body">
-          <div class="fav-section" id="favorite-driver-content">
+        <div class="search-container">
+          <svg
+            class="search-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="Search the web..."
+            autocomplete="off"
+            autofocus
+          />
+        </div>
+        <div class="header-right">
+          <div class="clock" id="clock">
+            <span class="clock-time" id="clock-time"></span>
+            <span class="clock-date" id="clock-date"></span>
+          </div>
+          <div class="live-badge hidden" id="live-indicator">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+          </div>
+          <button class="icon-btn" id="settings-btn" title="Settings">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-settings-icon lucide-settings"
+            >
+              <path
+                d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"
+              />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Widget Grid - 4 columns -->
+      <div class="widget-grid">
+        <!-- Row 1 -->
+
+        <div class="widget widget-session" id="live-session-widget">
+          <div class="widget-label">SESSION</div>
+          <div class="widget-body" id="session-content">
             <div class="loading-pulse"></div>
           </div>
-          <div class="fav-divider"></div>
-          <div class="fav-section" id="favorite-team-content">
+        </div>
+
+        <div class="widget widget-live-standings" id="live-standings-widget">
+          <div class="widget-label">
+            <span>LIVE STANDINGS</span>
+          </div>
+          <div class="widget-body" id="live-standings-content">
+            <div class="loading-pulse"></div>
+          </div>
+        </div>
+
+        <div class="widget widget-favorites" id="favorites-widget">
+          <div class="widget-label">
+            <span>MY FAVORITES</span>
+            <div class="fav-header-actions">
+              <button class="btn-link" id="change-driver-btn">Driver</button>
+              <span class="fav-header-sep">/</span>
+              <button class="btn-link" id="change-team-btn">Team</button>
+            </div>
+          </div>
+          <div class="widget-body favorites-body">
+            <div class="fav-section" id="favorite-driver-content">
+              <div class="loading-pulse"></div>
+            </div>
+            <div class="fav-divider"></div>
+            <div class="fav-section" id="favorite-team-content">
+              <div class="loading-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+
+        <div class="widget widget-drivers" id="driver-standings-widget">
+          <div class="widget-label">
+            <span>DRIVERS</span>
+            <span class="year-badge" id="standings-year">2026</span>
+          </div>
+          <div class="widget-body scrollable" id="drivers-content">
+            <div class="loading-pulse"></div>
+          </div>
+        </div>
+
+        <div
+          class="widget widget-constructors"
+          id="constructor-standings-widget"
+        >
+          <div class="widget-label">
+            <span>CONSTRUCTORS</span>
+            <span class="year-badge" id="constructors-year">2026</span>
+          </div>
+          <div class="widget-body scrollable" id="constructors-content">
+            <div class="loading-pulse"></div>
+          </div>
+        </div>
+
+        <div class="widget widget-calendar" id="calendar-widget">
+          <div class="widget-label">
+            <span>CALENDAR</span>
+            <span class="year-badge" id="calendar-year">2026</span>
+          </div>
+          <div class="widget-body scrollable" id="calendar-content">
+            <div class="loading-pulse"></div>
+          </div>
+        </div>
+
+        <div class="widget widget-countdown" id="next-race-widget">
+          <div class="widget-label">NEXT RACE</div>
+          <div class="widget-body" id="next-race-content">
             <div class="loading-pulse"></div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Row 2 -->
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal">
+      <div class="modal-overlay" data-close="settings"></div>
+      <div class="modal-box modal-settings">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button class="icon-btn" data-close="settings">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Theme Section -->
+          <div class="form-group">
+            <label>Theme</label>
+            <div class="theme-toggle" id="theme-toggle">
+              <button class="theme-option active" data-theme="default">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <span>Default</span>
+              </button>
+              <button class="theme-option" data-theme="wallpaper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                <span>Wallpaper</span>
+              </button>
+            </div>
+          </div>
 
-      <div class="widget widget-drivers" id="driver-standings-widget">
-        <div class="widget-label">
-          <span>DRIVERS</span>
-          <span class="year-badge" id="standings-year">2026</span>
-        </div>
-        <div class="widget-body scrollable" id="drivers-content">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
+          <!-- Wallpaper Options (hidden by default) -->
+          <div class="wallpaper-options" id="wallpaper-options">
+            <div class="form-group">
+              <label>Image URL</label>
+              <div class="url-input-group">
+                <input type="text" id="wallpaper-url-input" class="form-input" placeholder="Paste image URL..." />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Or Upload Image</label>
+              <div class="file-upload-zone" id="file-upload-zone">
+                <input type="file" id="wallpaper-file-input" accept="image/*" hidden />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                <span class="upload-text">Click to upload or drag &amp; drop</span>
+                <span class="upload-hint">JPG, PNG, WebP supported</span>
+              </div>
+            </div>
+            <!-- Wallpaper Preview -->
+            <div class="wallpaper-preview" id="wallpaper-preview">
+              <img id="wallpaper-preview-img" alt="Wallpaper preview" />
+              <button class="wallpaper-remove-btn" id="wallpaper-remove-btn" title="Remove wallpaper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+              </button>
+            </div>
+          </div>
 
-      <div class="widget widget-constructors" id="constructor-standings-widget">
-        <div class="widget-label">
-          <span>CONSTRUCTORS</span>
-          <span class="year-badge" id="constructors-year">2026</span>
-        </div>
-        <div class="widget-body scrollable" id="constructors-content">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
+          <div class="settings-divider"></div>
 
-      <div class="widget widget-calendar" id="calendar-widget">
-        <div class="widget-label">
-          <span>CALENDAR</span>
-          <span class="year-badge" id="calendar-year">2026</span>
-        </div>
-        <div class="widget-body scrollable" id="calendar-content">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
-
-      <div class="widget widget-countdown" id="next-race-widget">
-        <div class="widget-label">NEXT RACE</div>
-        <div class="widget-body" id="next-race-content">
-          <div class="loading-pulse"></div>
+          <div class="form-group">
+            <label>Favorite Driver</label>
+            <select id="favorite-driver-select">
+              <option value="">Select driver...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Favorite Constructor</label>
+            <select id="favorite-constructor-select">
+              <option value="">Select team...</option>
+            </select>
+          </div>
+          <button class="btn-primary" id="save-settings-btn">
+            Save Preferences
+          </button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Settings Modal -->
-  <div class="modal" id="settings-modal">
-    <div class="modal-overlay" data-close="settings"></div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2>Settings</h2>
-        <button class="icon-btn" data-close="settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Favorite Driver</label>
-          <select id="favorite-driver-select">
-            <option value="">Select driver...</option>
-          </select>
+    <!-- Driver Selection Modal -->
+    <div class="modal" id="driver-select-modal">
+      <div class="modal-overlay" data-close="driver-select"></div>
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h2>Select Your Driver</h2>
+          <button class="icon-btn" data-close="driver-select">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
         </div>
-        <div class="form-group">
-          <label>Favorite Constructor</label>
-          <select id="favorite-constructor-select">
-            <option value="">Select team...</option>
-          </select>
+        <div class="modal-body">
+          <div class="driver-picker" id="driver-grid"></div>
         </div>
-        <button class="btn-primary" id="save-settings-btn">Save Preferences</button>
       </div>
     </div>
-  </div>
 
-  <!-- Driver Selection Modal -->
-  <div class="modal" id="driver-select-modal">
-    <div class="modal-overlay" data-close="driver-select"></div>
-    <div class="modal-box modal-lg">
-      <div class="modal-header">
-        <h2>Select Your Driver</h2>
-        <button class="icon-btn" data-close="driver-select">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="driver-picker" id="driver-grid"></div>
+    <!-- Team Selection Modal -->
+    <div class="modal" id="team-select-modal">
+      <div class="modal-overlay" data-close="team-select"></div>
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Select Your Team</h2>
+          <button class="icon-btn" data-close="team-select">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="team-picker" id="team-grid"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Team Selection Modal -->
-  <div class="modal" id="team-select-modal">
-    <div class="modal-overlay" data-close="team-select"></div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2>Select Your Team</h2>
-        <button class="icon-btn" data-close="team-select">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="team-picker" id="team-grid"></div>
+    <!-- Live Standings Modal -->
+    <div class="modal" id="live-standings-modal">
+      <div class="modal-overlay" data-close="live-standings"></div>
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h2>Live Standings</h2>
+          <button class="icon-btn" data-close="live-standings">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="live-standings-full" id="live-standings-full"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Live Standings Modal -->
-  <div class="modal" id="live-standings-modal">
-    <div class="modal-overlay" data-close="live-standings"></div>
-    <div class="modal-box modal-lg">
-      <div class="modal-header">
-        <h2>Live Standings</h2>
-        <button class="icon-btn" data-close="live-standings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="live-standings-full" id="live-standings-full"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="js/api.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/widgets.js"></script>
-  <script src="js/app.js"></script>
-</body>
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/app.js"></script>
+  </body>
 </html>
