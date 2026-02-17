@@ -26,6 +26,7 @@ async function initDashboard() {
       renderFavoriteDriverWidget(),
       renderFavoriteTeamWidget(),
       renderLiveSessionWidget(),
+      renderLiveStandingsWidget(),
       renderDriverStandings(),
       renderConstructorStandings(),
       renderCalendarWidget(),
@@ -54,7 +55,7 @@ function setupEventListeners() {
   
   // Save settings button
   document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
-  
+
   // Close buttons (using data-close attribute)
   document.querySelectorAll('[data-close]').forEach(el => {
     el.addEventListener('click', function() {
@@ -62,6 +63,7 @@ function setupEventListeners() {
       if (target === 'settings') closeSettings();
       if (target === 'driver-select') closeDriverSelect();
       if (target === 'team-select') closeTeamSelect();
+      if (target === 'live-standings') closeLiveStandingsModal();
     });
   });
   
@@ -81,11 +83,18 @@ function setupEventListeners() {
       closeSettings();
       closeDriverSelect();
       closeTeamSelect();
+      closeLiveStandingsModal();
     }
   });
   
   // Event delegation for dynamic content
   document.addEventListener('click', async (e) => {
+    // View all live standings button
+    if (e.target.matches('[data-action="view-all-standings"]')) {
+      openLiveStandingsModal();
+      return;
+    }
+
     // Select driver button in widget
     if (e.target.matches('[data-action="select-driver"]')) {
       openDriverSelect();
@@ -132,6 +141,7 @@ async function refreshDashboard() {
     await Promise.all([
       renderNextRaceWidget(),
       renderLiveSessionWidget(),
+      renderLiveStandingsWidget(),
       renderDriverStandings(),
       renderConstructorStandings(),
     ]);

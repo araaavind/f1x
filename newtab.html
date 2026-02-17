@@ -51,32 +51,6 @@
     <!-- Widget Grid - 4 columns -->
     <div class="widget-grid">
       <!-- Row 1 -->
-      <div class="widget widget-countdown" id="next-race-widget">
-        <div class="widget-label">NEXT RACE</div>
-        <div class="widget-body" id="next-race-content">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
-
-      <div class="widget widget-fav-driver" id="favorite-driver-widget">
-        <div class="widget-label">
-          <span>MY DRIVER</span>
-          <button class="btn-link" id="change-driver-btn">Change</button>
-        </div>
-        <div class="widget-body" id="favorite-driver-content" style="padding-top: 0;">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
-
-      <div class="widget widget-fav-team" id="favorite-team-widget">
-        <div class="widget-label">
-          <span>MY TEAM</span>
-          <button class="btn-link" id="change-team-btn">Change</button>
-        </div>
-        <div class="widget-body" id="favorite-team-content" style="padding-top: 0;">
-          <div class="loading-pulse"></div>
-        </div>
-      </div>
 
       <div class="widget widget-session" id="live-session-widget">
         <div class="widget-label">SESSION</div>
@@ -85,7 +59,37 @@
         </div>
       </div>
 
+      <div class="widget widget-live-standings" id="live-standings-widget">
+        <div class="widget-label">
+          <span>LIVE STANDINGS</span>
+        </div>
+        <div class="widget-body" id="live-standings-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+      
+      <div class="widget widget-favorites" id="favorites-widget">
+        <div class="widget-label">
+          <span>MY FAVORITES</span>
+          <div class="fav-header-actions">
+            <button class="btn-link" id="change-driver-btn">Driver</button>
+            <span class="fav-header-sep">/</span>
+            <button class="btn-link" id="change-team-btn">Team</button>
+          </div>
+        </div>
+        <div class="widget-body favorites-body">
+          <div class="fav-section" id="favorite-driver-content">
+            <div class="loading-pulse"></div>
+          </div>
+          <div class="fav-divider"></div>
+          <div class="fav-section" id="favorite-team-content">
+            <div class="loading-pulse"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Row 2 -->
+
       <div class="widget widget-drivers" id="driver-standings-widget">
         <div class="widget-label">
           <span>DRIVERS</span>
@@ -112,6 +116,13 @@
           <span class="year-badge" id="calendar-year">2026</span>
         </div>
         <div class="widget-body scrollable" id="calendar-content">
+          <div class="loading-pulse"></div>
+        </div>
+      </div>
+
+      <div class="widget widget-countdown" id="next-race-widget">
+        <div class="widget-label">NEXT RACE</div>
+        <div class="widget-body" id="next-race-content">
           <div class="loading-pulse"></div>
         </div>
       </div>
@@ -180,6 +191,24 @@
       </div>
       <div class="modal-body">
         <div class="team-picker" id="team-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Standings Modal -->
+  <div class="modal" id="live-standings-modal">
+    <div class="modal-overlay" data-close="live-standings"></div>
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h2>Live Standings</h2>
+        <button class="icon-btn" data-close="live-standings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="live-standings-full" id="live-standings-full"></div>
       </div>
     </div>
   </div>

@@ -51,7 +51,7 @@ async function renderNextRaceWidget() {
     }
     
     const next = upcoming[0];
-    const circuitSvgUrl = F1API.getCircuitSvgUrl(next.circuit_short_name, next.meeting_name);
+    const circuitSvgUrl = F1API.getCircuitSvgUrl(next.circuit_short_name, next.meeting_name, 'white-outline');
     
     // Fetch sessions for this meeting
     let sessions = [];
@@ -250,25 +250,27 @@ async function renderFavoriteDriverWidget() {
     content.innerHTML = `
       <div class="fav-content" style="--team-color: ${color}">
         <img src="${photo}" alt="" class="fav-photo" style="border-color: ${color}" data-fallback="hide">
-        <div class="fav-name">${driver.full_name} <span class="fav-team-inline" style="color: ${color}">/ ${driver.team_name}</span></div>
-        <div class="fav-stats">
-          <div class="fav-stat">
-            <div class="fav-stat-value" style="color: ${color}">${stats.position}</div>
-            <div class="fav-stat-label">Pos</div>
-          </div>
-          <div class="fav-stat">
-            <div class="fav-stat-value" style="color: ${color}">${stats.wins}</div>
-            <div class="fav-stat-label">Wins</div>
-          </div>
-          <div class="fav-stat">
-            <div class="fav-stat-value" style="color: ${color}">${stats.points}</div>
-            <div class="fav-stat-label">Points</div>
+        <div class="fav-details">
+          <div class="fav-name">${driver.full_name} <span class="fav-team-inline" style="color: ${color}">/ ${driver.team_name}</span></div>
+          <div class="fav-stats">
+            <div class="fav-stat">
+              <div class="fav-stat-value" style="color: ${color}">${stats.position}</div>
+              <div class="fav-stat-label">Pos</div>
+            </div>
+            <div class="fav-stat">
+              <div class="fav-stat-value" style="color: ${color}">${stats.wins}</div>
+              <div class="fav-stat-label">Wins</div>
+            </div>
+            <div class="fav-stat">
+              <div class="fav-stat-value" style="color: ${color}">${stats.points}</div>
+              <div class="fav-stat-label">Pts</div>
+            </div>
           </div>
         </div>
       </div>
     `;
     setupImageErrorHandlers(content);
-    
+
   } catch (error) {
     console.error('Error loading favorite driver:', error);
     content.innerHTML = '<div class="no-fav"><button class="btn-select" data-action="select-driver">Select Driver</button></div>';
@@ -323,29 +325,31 @@ async function renderFavoriteTeamWidget() {
     
     content.innerHTML = `
       <div class="fav-content" style="--team-color: ${color}">
-        ${teamLogo 
-          ? `<img src="${teamLogo}" alt="" class="fav-team-logo" style="background: ${color}" data-fallback="hide">` 
+        ${teamLogo
+          ? `<img src="${teamLogo}" alt="" class="fav-team-logo" style="background: ${color}" data-fallback="hide">`
           : `<div class="team-color-box" style="background: ${color}">${favoriteTeam.substring(0, 2).toUpperCase()}</div>`
         }
-        <div class="fav-name">${favoriteTeam}</div>
-        <div class="fav-stats">
-          <div class="fav-stat">
-            <div class="fav-stat-value" style="color: ${color}">${stats.position}</div>
-            <div class="fav-stat-label">Pos</div>
-          </div>
-          <div class="fav-stat">
-            <div class="fav-stat-value" style="color: ${color}">${stats.wins}</div>
-            <div class="fav-stat-label">Wins</div>
-          </div>
-          <div class="fav-stat">
-            <div class="fav-stat-value" style="color: ${color}">${stats.points}</div>
-            <div class="fav-stat-label">Points</div>
+        <div class="fav-details">
+          <div class="fav-name">${favoriteTeam}</div>
+          <div class="fav-stats">
+            <div class="fav-stat">
+              <div class="fav-stat-value" style="color: ${color}">${stats.position}</div>
+              <div class="fav-stat-label">Pos</div>
+            </div>
+            <div class="fav-stat">
+              <div class="fav-stat-value" style="color: ${color}">${stats.wins}</div>
+              <div class="fav-stat-label">Wins</div>
+            </div>
+            <div class="fav-stat">
+              <div class="fav-stat-value" style="color: ${color}">${stats.points}</div>
+              <div class="fav-stat-label">Pts</div>
+            </div>
           </div>
         </div>
       </div>
     `;
     setupImageErrorHandlers(content);
-    
+
   } catch (error) {
     console.error('Error loading favorite team:', error);
     content.innerHTML = '<div class="no-fav"><button class="btn-select" data-action="select-team">Select Team</button></div>';
@@ -353,19 +357,19 @@ async function renderFavoriteTeamWidget() {
 }
 
 /**
- * Render Session Status Widget
+ * Render Session Status Widget with Weather & Race Control
  */
 async function renderLiveSessionWidget() {
   const content = document.getElementById('session-content');
   const liveIndicator = document.getElementById('live-indicator');
-  
+
   try {
     const session = await F1API.getLatestSession();
-    
+
     if (!session) {
       liveIndicator.classList.add('hidden');
       content.innerHTML = `
-        <div class="session-content" style="flex-direction: column">
+        <div class="session-empty">
           <svg class="session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 6v6l4 2"/>
@@ -376,7 +380,7 @@ async function renderLiveSessionWidget() {
       `;
       return;
     }
-    
+
     const isLive = F1API.isSessionLive(session);
     const sessionCircuitUrl = F1API.getCircuitSvgUrl(session.circuit_short_name, null, 'white-outline');
 
@@ -386,23 +390,132 @@ async function renderLiveSessionWidget() {
       liveIndicator.classList.add('hidden');
     }
 
+    // Fetch weather and race control in parallel
+    let weatherData = [];
+    let raceControlData = [];
+    try {
+      [weatherData, raceControlData] = await Promise.all([
+        F1API.getWeather(session.session_key),
+        F1API.getRaceControl(session.session_key),
+      ]);
+    } catch (e) {
+      console.warn('Could not fetch session details:', e);
+    }
+
+    // Get latest weather reading
+    const weather = weatherData && weatherData.length > 0
+      ? weatherData[weatherData.length - 1]
+      : null;
+
+    // Get last ~6 race control messages (most recent first)
+    const rcMessages = raceControlData && raceControlData.length > 0
+      ? raceControlData.slice(-6).reverse()
+      : [];
+
+    // Wind direction to compass
+    const windDir = weather ? degToCompass(weather.wind_direction) : '';
+
+    // Build weather HTML
+    const weatherHTML = weather ? `
+      <div class="session-weather">
+        <div class="weather-item">
+          <span class="weather-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z"/></svg>
+          </span>
+          <span class="weather-val">${weather.air_temperature.toFixed(1)}°</span>
+          <span class="weather-label">Air</span>
+        </div>
+        <div class="weather-item">
+          <span class="weather-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z"/><line x1="9" y1="10" x2="14" y2="10"/></svg>
+          </span>
+          <span class="weather-val weather-val-hot">${weather.track_temperature.toFixed(1)}°</span>
+          <span class="weather-label">Track</span>
+        </div>
+        <div class="weather-item">
+          <span class="weather-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+          </span>
+          <span class="weather-val">${weather.humidity.toFixed(0)}%</span>
+          <span class="weather-label">Humid</span>
+        </div>
+        <div class="weather-item">
+          <span class="weather-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+          </span>
+          <span class="weather-val">${weather.wind_speed.toFixed(1)}</span>
+          <span class="weather-label">${windDir}</span>
+        </div>
+        <div class="weather-item ${weather.rainfall > 0 ? 'weather-rain-active' : ''}">
+          <span class="weather-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
+          </span>
+          <span class="weather-val">${weather.rainfall > 0 ? weather.rainfall.toFixed(1) : 'Dry'}</span>
+          <span class="weather-label">${weather.rainfall > 0 ? 'mm' : 'Rain'}</span>
+        </div>
+      </div>
+    ` : '<div class="session-weather"><div class="weather-label" style="padding:8px;color:var(--text-muted)">No weather data</div></div>';
+
+    // Build race control HTML
+    const rcHTML = rcMessages.length > 0 ? rcMessages.map(msg => {
+      const flagClass = getRCFlagClass(msg.flag || msg.category || '');
+      const time = new Date(msg.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const text = msg.message || msg.category || '';
+      return `
+        <div class="rc-msg">
+          <span class="rc-flag ${flagClass}"></span>
+          <span class="rc-time">${time}</span>
+          <span class="rc-text">${text}</span>
+        </div>
+      `;
+    }).join('') : `
+      <div class="rc-empty">No messages</div>
+    `;
+
     content.innerHTML = `
-      <div class="session-content">
-        ${sessionCircuitUrl
-          ? `<img src="${sessionCircuitUrl}" alt="" class="session-circuit-bg">`
-          : `<div style="font-size: 48px; opacity: 0.7">${F1API.getCountryFlag(session.country_code)}</div>`}
-        <div class="session-info">
-          <div class="session-title">${getCountryFlag(session.country_code)} ${session.circuit_short_name}</div>
-          <div class="session-subtitle">${session.session_name}${isLive ? ' • LIVE' : ''}</div>
+      <div class="session-layout">
+        <div class="session-left">
+          ${sessionCircuitUrl
+            ? `<img src="${sessionCircuitUrl}" alt="" class="session-circuit-img">`
+            : `<div class="session-flag-large">${F1API.getCountryFlag(session.country_code)}</div>`}
+          <div class="session-meta">
+            <div class="session-title">${F1API.getCountryFlag(session.country_code)} ${session.circuit_short_name}</div>
+            <div class="session-subtitle">${session.session_name}${isLive ? ' <span class="session-live-pill">LIVE</span>' : ''}</div>
+          </div>
+        </div>
+        <div class="session-right">
+          ${weatherHTML}
+          <div class="session-rc">
+            <div class="session-rc-label">RACE CONTROL</div>
+            <div class="session-rc-feed">${rcHTML}</div>
+          </div>
         </div>
       </div>
     `;
-    
+
   } catch (error) {
     console.error('Error loading session:', error);
     liveIndicator.classList.add('hidden');
-    content.innerHTML = '<div class="session-content"><div class="session-title">Session Unavailable</div></div>';
+    content.innerHTML = '<div class="session-empty"><div class="session-title">Session Unavailable</div></div>';
   }
+}
+
+/** Convert wind degrees to compass direction */
+function degToCompass(deg) {
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+/** Map race control flag/category to CSS class */
+function getRCFlagClass(flag) {
+  const f = flag.toUpperCase();
+  if (f.includes('RED')) return 'rc-red';
+  if (f.includes('YELLOW')) return 'rc-yellow';
+  if (f.includes('GREEN') || f.includes('CLEAR')) return 'rc-green';
+  if (f.includes('CHEQUERED') || f.includes('CHECKERED')) return 'rc-chequered';
+  if (f.includes('SAFETY') || f.includes('VSC')) return 'rc-safety';
+  if (f.includes('BLUE')) return 'rc-blue';
+  return 'rc-default';
 }
 
 /**
@@ -705,11 +818,248 @@ async function selectTeam(name) {
   await renderFavoriteTeamWidget();
 }
 
+/**
+ * Render Live Standings Widget (top 5) with "View All" modal
+ */
+let lastPositionsData = []; // store for modal reuse
+
+async function renderLiveStandingsWidget() {
+  const content = document.getElementById('live-standings-content');
+
+  try {
+    const session = await F1API.getLatestSession();
+
+    if (!session) {
+      content.innerHTML = '<div class="no-data">No session data</div>';
+      return;
+    }
+
+    if (currentDrivers.length === 0) {
+      currentDrivers = await F1API.getLatestDrivers();
+    }
+
+    // Fetch positions, intervals, and laps in parallel
+    const [positions, intervals, laps] = await Promise.all([
+      F1API.getPositions(session.session_key),
+      F1API.getIntervals(session.session_key).catch(() => []),
+      F1API.getLaps(session.session_key).catch(() => []),
+    ]);
+
+    if (!positions || positions.length === 0) {
+      content.innerHTML = '<div class="no-data">No position data</div>';
+      return;
+    }
+
+    // Get latest position per driver
+    const latestPositions = {};
+    positions.forEach(p => {
+      latestPositions[p.driver_number] = p;
+    });
+
+    // Get latest interval per driver (race sessions only)
+    const latestIntervals = {};
+    if (intervals && intervals.length > 0) {
+      intervals.forEach(iv => {
+        latestIntervals[iv.driver_number] = iv;
+      });
+    }
+
+    // Get best lap and last lap per driver
+    const bestLaps = {};
+    const lastLaps = {};
+    if (laps && laps.length > 0) {
+      laps.forEach(lap => {
+        if (lap.lap_duration !== null && lap.lap_duration !== undefined) {
+          if (!bestLaps[lap.driver_number] || lap.lap_duration < bestLaps[lap.driver_number]) {
+            bestLaps[lap.driver_number] = lap.lap_duration;
+          }
+          // Track last lap (laps come chronologically, so last write wins)
+          lastLaps[lap.driver_number] = lap.lap_duration;
+        }
+      });
+    }
+
+    const hasIntervals = Object.keys(latestIntervals).length > 0;
+    const hasBestLaps = Object.keys(bestLaps).length > 0;
+
+    // Find fastest lap across all drivers for gap calculation
+    const fastestLap = hasBestLaps ? Math.min(...Object.values(bestLaps)) : null;
+
+    // Sort by position
+    const sorted = Object.values(latestPositions)
+      .sort((a, b) => a.position - b.position);
+
+    lastPositionsData = sorted.map(p => {
+      const driver = currentDrivers.find(d => d.driver_number === p.driver_number);
+      const iv = latestIntervals[p.driver_number];
+      const best = bestLaps[p.driver_number];
+      const last = lastLaps[p.driver_number];
+
+      // Race: interval to car ahead. Practice/Qual: fastest lap + delta to P1.
+      let interval = '';
+      let bestLapStr = best ? formatLapTime(best) : '';
+      let delta = '';
+
+      if (hasIntervals) {
+        // Race mode
+        if (p.position === 1) {
+          interval = 'LEADER';
+        } else if (iv) {
+          interval = formatInterval(iv.interval) || formatInterval(iv.gap_to_leader);
+        }
+      } else if (hasBestLaps) {
+        // Practice/Qualifying mode
+        if (p.position === 1) {
+          delta = '-';
+        } else if (best && fastestLap) {
+          const gap = best - fastestLap;
+          delta = gap > 0 ? `+${gap.toFixed(3)}s` : '-';
+        }
+      }
+
+      return {
+        position: p.position,
+        driverNumber: p.driver_number,
+        code: driver?.name_acronym || `#${p.driver_number}`,
+        fullName: driver?.full_name || `Driver ${p.driver_number}`,
+        teamName: driver?.team_name || '',
+        color: driver ? F1API.getTeamColor(driver.team_name, driver.team_colour) : '#888',
+        photo: driver?.headshot_url || '',
+        interval,
+        bestLap: bestLapStr,
+        delta,
+      };
+    });
+
+    // Render top 5 — different columns for race vs practice/quali
+    const top5 = lastPositionsData.slice(0, 5);
+
+    if (hasIntervals) {
+      // Race: P | Driver | Interval
+      content.innerHTML = `
+        <div class="ls-header">
+          <div class="ls-pos">P</div>
+          <div class="ls-code">Driver</div>
+          <div class="ls-interval">Interval</div>
+        </div>
+      ` + top5.map(d => `
+        <div class="ls-row" style="--team-color: ${d.color}">
+          <div class="ls-pos">${d.position}</div>
+          <div class="ls-code">${d.code}</div>
+          <div class="ls-interval">${d.interval}</div>
+        </div>
+      `).join('') + `<button class="btn-link ls-view-all" data-action="view-all-standings">View All</button>`;
+    } else {
+      // Practice/Qualifying: P | Driver | Fastest Lap | Delta
+      content.innerHTML = `
+        <div class="ls-header">
+          <div class="ls-pos">P</div>
+          <div class="ls-code">Driver</div>
+          <div class="ls-lap">Fastest</div>
+          <div class="ls-interval">Delta</div>
+        </div>
+      ` + top5.map(d => `
+        <div class="ls-row" style="--team-color: ${d.color}">
+          <div class="ls-pos">${d.position}</div>
+          <div class="ls-code">${d.code}</div>
+          <div class="ls-lap">${d.bestLap}</div>
+          <div class="ls-interval">${d.delta}</div>
+        </div>
+      `).join('') + `<button class="btn-link ls-view-all" data-action="view-all-standings">View All</button>`;
+    }
+
+  } catch (error) {
+    console.error('Error loading live standings:', error);
+    content.innerHTML = '<div class="no-data">Failed to load</div>';
+  }
+}
+
+function formatInterval(val) {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'number') return `+${val.toFixed(3)}s`;
+  return String(val);
+}
+
+function formatLapTime(seconds) {
+  if (!seconds && seconds !== 0) return '';
+  const mins = Math.floor(seconds / 60);
+  const secs = (seconds % 60).toFixed(3);
+  return mins > 0 ? `${mins}:${secs.padStart(6, '0')}` : `${secs}s`;
+}
+
+function openLiveStandingsModal() {
+  const modal = document.getElementById('live-standings-modal');
+  const grid = document.getElementById('live-standings-full');
+  modal.classList.add('active');
+
+  const fallbackSvg = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect fill=%22%23222%22 width=%2232%22 height=%2232%22/></svg>';
+
+  if (lastPositionsData.length === 0) {
+    grid.innerHTML = '<div class="no-data">No data available</div>';
+    return;
+  }
+
+  // Determine mode from data: if any driver has an interval, it's a race
+  const isRace = lastPositionsData.some(d => d.interval);
+
+  if (isRace) {
+    // Race: P | Driver | Interval
+    grid.innerHTML = `
+      <div class="ls-header ls-modal-header">
+        <div class="ls-pos">P</div>
+        <div class="ls-driver-col">Driver</div>
+        <div class="ls-interval">Interval</div>
+      </div>
+    ` + lastPositionsData.map(d => `
+      <div class="ls-row ls-modal-row" style="--team-color: ${d.color}">
+        <div class="ls-pos">${d.position}</div>
+        <div class="ls-driver-col">
+          <img src="${d.photo}" alt="" class="ls-photo" data-fallback="${fallbackSvg}">
+          <div class="ls-driver-info">
+            <div class="ls-driver-name">${d.fullName}</div>
+            <div class="ls-driver-team">${d.teamName}</div>
+          </div>
+        </div>
+        <div class="ls-interval">${d.interval || '-'}</div>
+      </div>
+    `).join('');
+  } else {
+    // Practice/Qualifying: P | Driver | Fastest Lap | Delta
+    grid.innerHTML = `
+      <div class="ls-header ls-modal-header">
+        <div class="ls-pos">P</div>
+        <div class="ls-driver-col">Driver</div>
+        <div class="ls-lap">Fastest Lap</div>
+        <div class="ls-interval">Delta</div>
+      </div>
+    ` + lastPositionsData.map(d => `
+      <div class="ls-row ls-modal-row" style="--team-color: ${d.color}">
+        <div class="ls-pos">${d.position}</div>
+        <div class="ls-driver-col">
+          <img src="${d.photo}" alt="" class="ls-photo" data-fallback="${fallbackSvg}">
+          <div class="ls-driver-info">
+            <div class="ls-driver-name">${d.fullName}</div>
+            <div class="ls-driver-team">${d.teamName}</div>
+          </div>
+        </div>
+        <div class="ls-lap">${d.bestLap || '-'}</div>
+        <div class="ls-interval">${d.delta || '-'}</div>
+      </div>
+    `).join('');
+  }
+  setupImageErrorHandlers(grid);
+}
+
+function closeLiveStandingsModal() {
+  document.getElementById('live-standings-modal').classList.remove('active');
+}
+
 // Export functions
 window.renderNextRaceWidget = renderNextRaceWidget;
 window.renderFavoriteDriverWidget = renderFavoriteDriverWidget;
 window.renderFavoriteTeamWidget = renderFavoriteTeamWidget;
 window.renderLiveSessionWidget = renderLiveSessionWidget;
+window.renderLiveStandingsWidget = renderLiveStandingsWidget;
 window.renderDriverStandings = renderDriverStandings;
 window.renderConstructorStandings = renderConstructorStandings;
 window.renderCalendarWidget = renderCalendarWidget;
@@ -719,3 +1069,5 @@ window.selectDriver = selectDriver;
 window.openTeamSelect = openTeamSelect;
 window.closeTeamSelect = closeTeamSelect;
 window.selectTeam = selectTeam;
+window.openLiveStandingsModal = openLiveStandingsModal;
+window.closeLiveStandingsModal = closeLiveStandingsModal;

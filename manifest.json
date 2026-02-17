@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "F1 Dashboard - New Tab",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Transform your new tab into a stunning F1 dashboard with live stats, standings, and race schedules",
   "chrome_url_overrides": {
     "newtab": "newtab.html"

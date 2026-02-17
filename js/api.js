@@ -11,8 +11,8 @@ const CACHE_DURATION = {
   meetings: 2 * 60 * 60 * 1000,      // 2 hours
   sessions: 60 * 60 * 1000,      // 1 hour
   drivers: 60 * 60 * 1000,      // 1 hour
-  positions: 30 * 1000,          // 30 seconds (for live data)
-  intervals: 30 * 1000,          // 30 seconds (for live data)
+  positions: 10 * 1000,          // 30 seconds (for live data)
+  intervals: 10 * 1000,          // 30 seconds (for live data)
 };
 
 // In-memory cache
@@ -311,6 +311,20 @@ async function getLaps(sessionKey, driverNumber = null) {
   const params = { session_key: sessionKey };
   if (driverNumber) params.driver_number = driverNumber;
   return fetchAPI('/laps', params, `laps_${sessionKey}_${driverNumber || 'all'}`, CACHE_DURATION.positions);
+}
+
+/**
+ * Get weather data for a session
+ */
+async function getWeather(sessionKey) {
+  return fetchAPI('/weather', { session_key: sessionKey }, `weather_${sessionKey}`, CACHE_DURATION.positions);
+}
+
+/**
+ * Get race control messages for a session
+ */
+async function getRaceControl(sessionKey) {
+  return fetchAPI('/race_control', { session_key: sessionKey }, `race_control_${sessionKey}`, CACHE_DURATION.positions);
 }
 
 /**
@@ -626,6 +640,8 @@ window.F1API = {
   getIntervals,
   getSessionResult,
   getLaps,
+  getWeather,
+  getRaceControl,
   getLatestSession,
   isSessionLive,
   getUpcomingMeetings,
