@@ -12,6 +12,13 @@ async function initDashboard() {
 
   // Set up all event listeners first
   setupEventListeners();
+
+  // Autofocus search bar
+  document.getElementById('search-input').focus();
+
+  // Start clock
+  updateClock();
+  setInterval(updateClock, 1000);
   
   try {
     await Promise.all([
@@ -58,6 +65,16 @@ function setupEventListeners() {
     });
   });
   
+  // Search bar
+  document.getElementById('search-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const query = e.target.value.trim();
+      if (query) {
+        chrome.runtime.sendMessage({ type: 'search', query });
+      }
+    }
+  });
+
   // Escape key to close modals
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -181,6 +198,16 @@ async function saveSettings() {
   
   await renderFavoriteDriverWidget();
   await renderFavoriteTeamWidget();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock-time').textContent = now.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit'
+  });
+  document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric'
+  });
 }
 
 // Initialize when DOM is ready
