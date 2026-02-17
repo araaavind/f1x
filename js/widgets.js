@@ -365,7 +365,7 @@ async function renderLiveSessionWidget() {
     if (!session) {
       liveIndicator.classList.add('hidden');
       content.innerHTML = `
-        <div class="session-content">
+        <div class="session-content" style="flex-direction: column">
           <svg class="session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 6v6l4 2"/>
@@ -390,9 +390,11 @@ async function renderLiveSessionWidget() {
       <div class="session-content">
         ${sessionCircuitUrl
           ? `<img src="${sessionCircuitUrl}" alt="" class="session-circuit-bg">`
-          : `<div style="font-size: 24px; margin-bottom: 6px">${F1API.getCountryFlag(session.country_code)}</div>`}
-        <div class="session-title">${session.circuit_short_name}</div>
-        <div class="session-subtitle">${session.session_name}${isLive ? ' • LIVE' : ''}</div>
+          : `<div style="font-size: 48px; opacity: 0.7">${F1API.getCountryFlag(session.country_code)}</div>`}
+        <div class="session-info">
+          <div class="session-title">${getCountryFlag(session.country_code)} ${session.circuit_short_name}</div>
+          <div class="session-subtitle">${session.session_name}${isLive ? ' • LIVE' : ''}</div>
+        </div>
       </div>
     `;
     
@@ -448,7 +450,7 @@ async function renderDriverStandings() {
             <div class="driver-name">${fullName}</div>
             <div class="driver-team">${teamName}</div>
           </div>
-          <div class="driver-points" style="color: ${color}">${standing.points} pts</div>
+          <div class="points-pill" style="color: ${color}">${standing.points} pts</div>
         </div>
       `;
     }).join('');
@@ -513,7 +515,7 @@ async function renderConstructorStandings() {
             <div class="constructor-name">${teamName}</div>
             <div class="constructor-drivers">${driverCodes}</div>
           </div>
-          <div class="constructor-points" style="color: ${color}">${standing.points} pts</div>
+          <div class="points-pill" style="color: ${color}">${standing.points} pts</div>
         </div>
       `;
     }).join('');
