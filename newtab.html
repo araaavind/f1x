@@ -11,6 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="vendor/gridstack/gridstack.min.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -67,6 +68,27 @@
             <span class="live-dot"></span>
             <span>LIVE</span>
           </div>
+          <button class="icon-btn" id="edit-layout-btn" title="Edit Layout">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+            </svg>
+          </button>
+          <button class="edit-mode-btn hidden" id="available-widgets-btn">Available Widgets</button>
+          <button class="edit-mode-btn hidden" id="reset-layout-navbar-btn">Reset</button>
+          <button class="edit-mode-btn edit-mode-done hidden" id="done-editing-btn">Done</button>
           <button class="icon-btn" id="settings-btn" title="Settings">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -89,88 +111,117 @@
         </div>
       </header>
 
-      <!-- Widget Grid - 4 columns -->
-      <div class="widget-grid">
+      <!-- Widget Grid (GridStack) -->
+      <div class="widget-grid grid-stack" id="widget-grid">
         <!-- Row 1 -->
-
-        <div class="widget widget-session" id="live-session-widget">
-          <div class="widget-label">SESSION</div>
-          <div class="widget-body" id="session-content">
-            <div class="loading-pulse"></div>
+        <div class="grid-stack-item" gs-id="live-session-widget" gs-x="0" gs-y="0" gs-w="13" gs-h="4">
+          <div class="grid-stack-item-content">
+            <div class="widget widget-session" id="live-session-widget">
+              <div class="widget-label">SESSION</div>
+              <div class="widget-body" id="session-content">
+                <div class="loading-pulse"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="widget widget-live-standings" id="live-standings-widget">
-          <div class="widget-label">
-            <span>LIVE STANDINGS</span>
-          </div>
-          <div class="widget-body" id="live-standings-content">
-            <div class="loading-pulse"></div>
+        <div class="grid-stack-item" gs-id="live-standings-widget" gs-x="13" gs-y="0" gs-w="6" gs-h="4">
+          <div class="grid-stack-item-content">
+            <div class="widget widget-live-standings" id="live-standings-widget">
+              <div class="widget-label">
+                <span>LIVE STANDINGS</span>
+                <button class="ls-expand-btn" data-action="view-all-standings" title="Expand standings">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                    <path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="widget-body" id="live-standings-content">
+                <div class="loading-pulse"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="widget widget-favorites" id="favorites-widget">
-          <div class="widget-label">
-            <span>MY FAVORITES</span>
-            <div class="fav-header-actions">
-              <button class="btn-link" id="change-driver-btn">Driver</button>
-              <span class="fav-header-sep">/</span>
-              <button class="btn-link" id="change-team-btn">Team</button>
-            </div>
-          </div>
-          <div class="widget-body favorites-body">
-            <div class="fav-section" id="favorite-driver-content">
-              <div class="loading-pulse"></div>
-            </div>
-            <div class="fav-divider"></div>
-            <div class="fav-section" id="favorite-team-content">
-              <div class="loading-pulse"></div>
+        <div class="grid-stack-item" gs-id="favorites-widget" gs-x="19" gs-y="0" gs-w="5" gs-h="4">
+          <div class="grid-stack-item-content">
+            <div class="widget widget-favorites" id="favorites-widget">
+              <div class="widget-label">
+                <span>MY FAVORITES</span>
+                <div class="fav-header-actions">
+                  <button class="btn-link" id="change-driver-btn">Driver</button>
+                  <span class="fav-header-sep">/</span>
+                  <button class="btn-link" id="change-team-btn">Team</button>
+                </div>
+              </div>
+              <div class="widget-body favorites-body">
+                <div class="fav-section" id="favorite-driver-content">
+                  <div class="loading-pulse"></div>
+                </div>
+                <div class="fav-divider"></div>
+                <div class="fav-section" id="favorite-team-content">
+                  <div class="loading-pulse"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Row 2 -->
-
-        <div class="widget widget-drivers" id="driver-standings-widget">
-          <div class="widget-label">
-            <span>DRIVERS</span>
-            <span class="year-badge" id="standings-year">2026</span>
-          </div>
-          <div class="widget-body scrollable" id="drivers-content">
-            <div class="loading-pulse"></div>
-          </div>
-        </div>
-
-        <div
-          class="widget widget-constructors"
-          id="constructor-standings-widget"
-        >
-          <div class="widget-label">
-            <span>CONSTRUCTORS</span>
-            <span class="year-badge" id="constructors-year">2026</span>
-          </div>
-          <div class="widget-body scrollable" id="constructors-content">
-            <div class="loading-pulse"></div>
+        <div class="grid-stack-item" gs-id="driver-standings-widget" gs-x="0" gs-y="4" gs-w="6" gs-h="6">
+          <div class="grid-stack-item-content">
+            <div class="widget widget-drivers" id="driver-standings-widget">
+              <div class="widget-label">
+                <span>DRIVERS</span>
+                <span class="year-badge" id="standings-year">2026</span>
+              </div>
+              <div class="widget-body scrollable" id="drivers-content">
+                <div class="loading-pulse"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="widget widget-calendar" id="calendar-widget">
-          <div class="widget-label">
-            <span>CALENDAR</span>
-            <span class="year-badge" id="calendar-year">2026</span>
-          </div>
-          <div class="widget-body scrollable" id="calendar-content">
-            <div class="loading-pulse"></div>
+        <div class="grid-stack-item" gs-id="constructor-standings-widget" gs-x="6" gs-y="4" gs-w="6" gs-h="6">
+          <div class="grid-stack-item-content">
+            <div class="widget widget-constructors" id="constructor-standings-widget">
+              <div class="widget-label">
+                <span>CONSTRUCTORS</span>
+                <span class="year-badge" id="constructors-year">2026</span>
+              </div>
+              <div class="widget-body scrollable" id="constructors-content">
+                <div class="loading-pulse"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="widget widget-countdown" id="next-race-widget">
-          <div class="widget-label">NEXT RACE</div>
-          <div class="widget-body" id="next-race-content">
-            <div class="loading-pulse"></div>
+        <div class="grid-stack-item" gs-id="calendar-widget" gs-x="12" gs-y="4" gs-w="6" gs-h="6">
+          <div class="grid-stack-item-content">
+            <div class="widget widget-calendar" id="calendar-widget">
+              <div class="widget-label">
+                <span>CALENDAR</span>
+                <span class="year-badge" id="calendar-year">2026</span>
+              </div>
+              <div class="widget-body scrollable" id="calendar-content">
+                <div class="loading-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-stack-item" gs-id="next-race-widget" gs-x="18" gs-y="4" gs-w="6" gs-h="6">
+          <div class="grid-stack-item-content">
+            <div class="widget widget-countdown" id="next-race-widget">
+              <div class="widget-label">NEXT RACE</div>
+              <div class="widget-body" id="next-race-content">
+                <div class="loading-pulse"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
 
     <!-- Settings Modal -->
@@ -322,10 +373,35 @@
       </div>
     </div>
 
+    <!-- Available Widgets Modal -->
+    <div class="modal" id="available-widgets-modal">
+      <div class="modal-overlay" data-close="available-widgets"></div>
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h2>Available Widgets</h2>
+          <button class="icon-btn" data-close="available-widgets">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="available-widgets-list" id="available-widgets-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Scripts -->
+    <script src="vendor/gridstack/gridstack-all.js"></script>
     <script src="js/api.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/widgets.js"></script>
+    <script src="js/grid-manager.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

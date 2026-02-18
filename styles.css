@@ -50,7 +50,7 @@
 html,
 body {
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 body {
@@ -84,7 +84,11 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.643);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0) 40%
+  );
   pointer-events: none;
 }
 
@@ -198,11 +202,11 @@ body {
 
 /* ===== DASHBOARD LAYOUT ===== */
 .dashboard {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 18px 24px;
-  gap: 16px;
+  gap: 12px;
   max-width: 1800px;
   margin: 0 auto;
   position: relative;
@@ -250,7 +254,7 @@ body {
 
 .logo-subtitle {
   font-size: 10px;
-  color: var(--text-muted);
+  color: #d3d3d3;
   letter-spacing: 0.3px;
 }
 
@@ -416,45 +420,45 @@ body {
   color: var(--text-primary);
 }
 
-/* ===== WIDGET GRID ===== */
+/* ===== WIDGET GRID (GridStack) ===== */
 .widget-grid {
   flex: 1;
-  display: grid;
-  grid-template-columns: repeat(24, 1fr);
-  grid-template-rows: 260px 1fr;
-  gap: 14px;
   min-height: 0;
 }
 
-/* Row 1 */
-.widget-live-standings {
-  grid-column: span 6;
+/* GridStack item content must fill but not clip hover transforms */
+.grid-stack-item-content {
+  overflow: visible !important;
 }
 
-.widget-session {
-  grid-column: span 13;
+.grid-stack-item-content > .widget {
+  width: 100%;
+  height: 100%;
 }
 
-.widget-favorites {
-  grid-column: span 5;
+/* GridStack placeholder styling */
+.grid-stack-placeholder > .placeholder-content {
+  background-color: rgba(225, 6, 0, 0.06) !important;
+  border: 2px dashed rgba(225, 6, 0, 0.25) !important;
+  border-radius: 16px !important;
 }
 
-/* Row 2 */
-
-.widget-drivers {
-  grid-column: span 6;
+/* GridStack resize handle */
+.grid-stack-item > .ui-resizable-se {
+  width: 20px !important;
+  height: 20px !important;
+  opacity: 0;
+  transition: opacity 0.2s;
+  bottom: 4px !important;
+  right: 4px !important;
 }
 
-.widget-constructors {
-  grid-column: span 6;
+body.grid-edit-mode .grid-stack-item > .ui-resizable-se {
+  opacity: 0.4;
 }
 
-.widget-calendar {
-  grid-column: span 6;
-}
-
-.widget-countdown {
-  grid-column: span 6;
+body.grid-edit-mode .grid-stack-item:hover > .ui-resizable-se {
+  opacity: 1;
 }
 
 /* ===== WIDGET BASE ===== */
@@ -476,25 +480,25 @@ body {
 }
 
 /* Staggered entrance animation */
-.widget:nth-child(1) {
+.grid-stack-item:nth-child(1) .widget {
   animation-delay: 0.05s;
 }
-.widget:nth-child(2) {
+.grid-stack-item:nth-child(2) .widget {
   animation-delay: 0.1s;
 }
-.widget:nth-child(3) {
+.grid-stack-item:nth-child(3) .widget {
   animation-delay: 0.15s;
 }
-.widget:nth-child(4) {
+.grid-stack-item:nth-child(4) .widget {
   animation-delay: 0.2s;
 }
-.widget:nth-child(5) {
+.grid-stack-item:nth-child(5) .widget {
   animation-delay: 0.25s;
 }
-.widget:nth-child(6) {
+.grid-stack-item:nth-child(6) .widget {
   animation-delay: 0.3s;
 }
-.widget:nth-child(7) {
+.grid-stack-item:nth-child(7) .widget {
   animation-delay: 0.35s;
 }
 
@@ -527,8 +531,11 @@ body {
 
 .widget:hover {
   border-color: var(--border-light);
-  transform: translateY(-2px);
   box-shadow: var(--shadow-card-hover);
+}
+
+body:not(.grid-edit-mode) .widget:hover {
+  transform: translateY(-2px);
 }
 
 /* Widget Label/Header */
@@ -1324,11 +1331,52 @@ body {
 }
 
 /* ===== LIVE STANDINGS WIDGET ===== */
+
+/* Make widget body scrollable for full standings list */
+.widget-live-standings .widget-body {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+.widget-live-standings .widget-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.widget-live-standings .widget-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+/* Expand button in widget title bar */
+.ls-expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.ls-expand-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .ls-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 2px 8px 4px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 1;
 }
 
 .ls-header .ls-pos,
@@ -1396,11 +1444,7 @@ body {
   text-align: right;
 }
 
-.ls-view-all {
-  display: block;
-  margin: 8px auto 0;
-  font-size: 9px;
-}
+/* ls-view-all removed — replaced by expand icon in title bar */
 
 /* Modal-specific live standings rows */
 .ls-modal-header {
@@ -2239,19 +2283,19 @@ body.wallpaper-mode .bg-wallpaper {
 body.wallpaper-mode .widget {
   background: linear-gradient(
     135deg,
-    rgba(10, 10, 15, 0.55) 0%,
-    rgba(10, 10, 15, 0.5) 100%
+    rgba(10, 10, 15, 0.8) 0%,
+    rgba(10, 10, 15, 0.6) 100%
   );
-  backdrop-filter: blur(16px) saturate(1.3);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
 body.wallpaper-mode .widget:hover {
   background: linear-gradient(
     135deg,
-    rgba(10, 10, 15, 0.6) 0%,
-    rgba(10, 10, 15, 0.55) 100%
+    rgba(10, 10, 15, 0.7) 0%,
+    rgba(10, 10, 15, 0.5) 100%
   );
   border-color: rgba(255, 255, 255, 0.12);
 }
@@ -2278,21 +2322,220 @@ body.wallpaper-mode .widget-label {
   border-bottom-color: rgba(255, 255, 255, 0.05);
 }
 
+/* ===== EDIT MODE ===== */
+body.grid-edit-mode .widget {
+  border-style: dashed;
+  border-color: rgba(225, 6, 0, 0.25);
+}
+
+body.grid-edit-mode .widget:hover {
+  border-color: rgba(225, 6, 0, 0.5);
+  cursor: grab;
+}
+
+body.grid-edit-mode .grid-stack-item.ui-draggable-dragging .widget {
+  cursor: grabbing;
+  border-color: var(--f1-red);
+  box-shadow:
+    0 8px 32px rgba(225, 6, 0, 0.2),
+    var(--shadow-card-hover);
+}
+
+/* Widget Remove Button (edit mode only) */
+.widget-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(225, 6, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  padding: 0;
+}
+
+.widget-remove-btn svg {
+  width: 12px;
+  height: 12px;
+  color: white;
+}
+
+.widget-remove-btn:hover {
+  background: var(--f1-red);
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(225, 6, 0, 0.4);
+}
+
+/* Edit Layout Button Active State */
+.icon-btn.active {
+  background: rgba(225, 6, 0, 0.15);
+  border-color: rgba(225, 6, 0, 0.3);
+}
+
+.icon-btn.active svg {
+  color: var(--f1-red);
+}
+
+/* ===== EDIT MODE NAVBAR BUTTONS ===== */
+.edit-mode-btn {
+  padding: 7px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+  white-space: nowrap;
+}
+
+.edit-mode-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.edit-mode-btn.edit-mode-done {
+  background: rgba(225, 6, 0, 0.12);
+  border-color: rgba(225, 6, 0, 0.3);
+  color: var(--f1-red);
+}
+
+.edit-mode-btn.edit-mode-done:hover {
+  background: rgba(225, 6, 0, 0.22);
+  border-color: var(--f1-red);
+  color: #ff3333;
+}
+
+.edit-mode-btn.hidden {
+  display: none;
+}
+
+/* Hide clock and settings in edit mode */
+.clock.hidden {
+  display: none;
+}
+
+.icon-btn.hidden {
+  display: none;
+}
+
+/* ===== AVAILABLE WIDGETS MODAL ===== */
+.available-widgets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aw-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  transition: all 0.2s var(--ease-out);
+}
+
+.aw-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-light);
+}
+
+.aw-item.aw-hidden {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.aw-item.aw-hidden:hover {
+  opacity: 1;
+}
+
+.aw-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.aw-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.aw-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.aw-restore-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(225, 6, 0, 0.1);
+  border: 1px solid rgba(225, 6, 0, 0.25);
+  border-radius: 8px;
+  color: var(--f1-red);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  flex-shrink: 0;
+}
+
+.aw-restore-btn:hover {
+  background: rgba(225, 6, 0, 0.2);
+  border-color: var(--f1-red);
+  box-shadow: 0 0 10px rgba(225, 6, 0, 0.15);
+}
+
+.aw-visible-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #5ae85a;
+  background: rgba(82, 226, 82, 0.1);
+  border: 1px solid rgba(82, 226, 82, 0.15);
+  padding: 4px 10px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* Secondary Button (settings) */
+.btn-secondary {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--f1-red);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
-  .widget-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 200px 200px 1fr;
-  }
-  .widget-session,
-  .widget-live-standings,
-  .widget-favorites,
-  .widget-countdown,
-  .widget-calendar,
-  .widget-drivers,
-  .widget-constructors {
-    grid-column: span 1;
-  }
   .session-left {
     flex: 0 0 120px;
   }
@@ -2301,20 +2544,6 @@ body.wallpaper-mode .widget-label {
 @media (max-width: 768px) {
   .dashboard {
     padding: 12px;
-  }
-  .widget-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    gap: 10px;
-  }
-  .widget-session,
-  .widget-live-standings,
-  .widget-favorites,
-  .widget-countdown,
-  .widget-calendar,
-  .widget-drivers,
-  .widget-constructors {
-    grid-column: span 1;
   }
   .widget-session {
     min-height: 280px;

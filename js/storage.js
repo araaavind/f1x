@@ -131,6 +131,8 @@ async function clearWallpaper() {
 
 // Export functions
 window.F1Storage = {
+  saveToStorage,
+  loadFromStorage,
   saveFavoriteDriver,
   loadFavoriteDriver,
   saveFavoriteConstructor,

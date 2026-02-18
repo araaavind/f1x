@@ -20,13 +20,16 @@ async function initDashboard() {
   // Restore wallpaper before anything renders
   await restoreWallpaper();
 
+  // Initialize GridStack layout
+  await F1Grid.init();
+
   // Autofocus search bar
   document.getElementById('search-input').focus();
 
   // Start clock
   updateClock();
   setInterval(updateClock, 1000);
-  
+
   try {
     await Promise.all([
       renderNextRaceWidget(),
@@ -63,6 +66,28 @@ function setupEventListeners() {
   // Save settings button
   document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
 
+  // Edit layout toggle
+  document.getElementById('edit-layout-btn').addEventListener('click', () => {
+    F1Grid.toggleEditMode();
+  });
+
+  // Available Widgets button (navbar, edit mode)
+  document.getElementById('available-widgets-btn').addEventListener('click', () => {
+    F1Grid.openAvailableWidgetsModal();
+  });
+
+  // Reset layout button (navbar, edit mode)
+  document.getElementById('reset-layout-navbar-btn').addEventListener('click', () => {
+    if (confirm('Reset widget layout to defaults?')) {
+      F1Grid.resetLayout();
+    }
+  });
+
+  // Done editing button (navbar, edit mode)
+  document.getElementById('done-editing-btn').addEventListener('click', () => {
+    F1Grid.toggleEditMode();
+  });
+
   // Close buttons (using data-close attribute)
   document.querySelectorAll('[data-close]').forEach(el => {
     el.addEventListener('click', function() {
@@ -71,6 +96,7 @@ function setupEventListeners() {
       if (target === 'driver-select') closeDriverSelect();
       if (target === 'team-select') closeTeamSelect();
       if (target === 'live-standings') closeLiveStandingsModal();
+      if (target === 'available-widgets') F1Grid.closeAvailableWidgetsModal();
     });
   });
   
@@ -91,13 +117,14 @@ function setupEventListeners() {
       closeDriverSelect();
       closeTeamSelect();
       closeLiveStandingsModal();
+      F1Grid.closeAvailableWidgetsModal();
     }
   });
   
   // Event delegation for dynamic content
   document.addEventListener('click', async (e) => {
     // View all live standings button
-    if (e.target.matches('[data-action="view-all-standings"]')) {
+    if (e.target.closest('[data-action="view-all-standings"]')) {
       openLiveStandingsModal();
       return;
     }
@@ -114,6 +141,20 @@ function setupEventListeners() {
       return;
     }
     
+    // Remove widget button (edit mode)
+    const removeBtn = e.target.closest('[data-remove-widget]');
+    if (removeBtn) {
+      F1Grid.removeWidget(removeBtn.getAttribute('data-remove-widget'));
+      return;
+    }
+
+    // Restore widget button (add-widget panel)
+    const restoreBtn = e.target.closest('[data-restore-widget]');
+    if (restoreBtn) {
+      await F1Grid.restoreWidget(restoreBtn.getAttribute('data-restore-widget'));
+      return;
+    }
+
     // Driver card in selection modal
     const driverCard = e.target.closest('[data-driver]');
     if (driverCard) {
@@ -121,7 +162,7 @@ function setupEventListeners() {
       await selectDriver(driverNum);
       return;
     }
-    
+
     // Team card in selection modal
     const teamCard = e.target.closest('[data-team]');
     if (teamCard) {

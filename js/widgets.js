@@ -409,7 +409,7 @@ async function renderLiveSessionWidget() {
 
     // Get last ~6 race control messages (most recent first)
     const rcMessages = raceControlData && raceControlData.length > 0
-      ? raceControlData.slice(-6).reverse()
+      ? raceControlData.slice(-50).reverse()
       : [];
 
     // Wind direction to compass
@@ -931,8 +931,8 @@ async function renderLiveStandingsWidget() {
       };
     });
 
-    // Render top 5 — different columns for race vs practice/quali
-    const top5 = lastPositionsData.slice(0, 5);
+    // Render all positions — different columns for race vs practice/quali
+    const allDrivers = lastPositionsData;
 
     if (hasIntervals) {
       // Race: P | Driver | Interval
@@ -942,13 +942,13 @@ async function renderLiveStandingsWidget() {
           <div class="ls-code">Driver</div>
           <div class="ls-interval">Interval</div>
         </div>
-      ` + top5.map(d => `
+      ` + allDrivers.map(d => `
         <div class="ls-row" style="--team-color: ${d.color}">
           <div class="ls-pos">${d.position}</div>
           <div class="ls-code">${d.code}</div>
           <div class="ls-interval">${d.interval}</div>
         </div>
-      `).join('') + `<button class="btn-link ls-view-all" data-action="view-all-standings">View All</button>`;
+      `).join('');
     } else {
       // Practice/Qualifying: P | Driver | Fastest Lap | Delta
       content.innerHTML = `
@@ -958,14 +958,14 @@ async function renderLiveStandingsWidget() {
           <div class="ls-lap">Fastest</div>
           <div class="ls-interval">Delta</div>
         </div>
-      ` + top5.map(d => `
+      ` + allDrivers.map(d => `
         <div class="ls-row" style="--team-color: ${d.color}">
           <div class="ls-pos">${d.position}</div>
           <div class="ls-code">${d.code}</div>
           <div class="ls-lap">${d.bestLap}</div>
           <div class="ls-interval">${d.delta}</div>
         </div>
-      `).join('') + `<button class="btn-link ls-view-all" data-action="view-all-standings">View All</button>`;
+      `).join('');
     }
 
   } catch (error) {
