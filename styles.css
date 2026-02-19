@@ -1382,7 +1382,8 @@ body:not(.grid-edit-mode) .widget:hover {
 .ls-header .ls-pos,
 .ls-header .ls-code,
 .ls-header .ls-interval,
-.ls-header .ls-lap {
+.ls-header .ls-lap,
+.ls-header .ls-tyre {
   font-size: 8px;
   font-weight: 700;
   color: var(--text-muted);
@@ -1442,6 +1443,59 @@ body:not(.grid-edit-mode) .widget:hover {
   font-variant-numeric: tabular-nums;
   min-width: 52px;
   text-align: right;
+}
+
+/* Tyre compound column */
+.ls-tyre {
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tyre-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1;
+  border: 1.5px solid currentColor;
+  color: #888;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.tyre-badge.tyre-soft {
+  color: #e10600;
+  border-color: #e10600;
+  background: rgba(225, 6, 0, 0.15);
+}
+
+.tyre-badge.tyre-medium {
+  color: #ffd700;
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+}
+
+.tyre-badge.tyre-hard {
+  color: #e0e0e0;
+  border-color: #e0e0e0;
+  background: rgba(224, 224, 224, 0.1);
+}
+
+.tyre-badge.tyre-inter {
+  color: #5ae85a;
+  border-color: #5ae85a;
+  background: rgba(90, 232, 90, 0.15);
+}
+
+.tyre-badge.tyre-wet {
+  color: #64c4ff;
+  border-color: #64c4ff;
+  background: rgba(100, 196, 255, 0.15);
 }
 
 /* ls-view-all removed — replaced by expand icon in title bar */

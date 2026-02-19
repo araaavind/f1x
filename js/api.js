@@ -328,6 +328,13 @@ async function getRaceControl(sessionKey) {
 }
 
 /**
+ * Get stint data (tyre compounds) for a session
+ */
+async function getStints(sessionKey) {
+  return fetchAPI('/stints', { session_key: sessionKey }, `stints_${sessionKey}`, CACHE_DURATION.positions);
+}
+
+/**
  * Get the latest/current session
  */
 async function getLatestSession() {
@@ -638,6 +645,7 @@ window.F1API = {
   getLatestDrivers,
   getPositions,
   getIntervals,
+  getStints,
   getSessionResult,
   getLaps,
   getWeather,

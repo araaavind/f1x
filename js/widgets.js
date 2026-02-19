@@ -838,11 +838,12 @@ async function renderLiveStandingsWidget() {
       currentDrivers = await F1API.getLatestDrivers();
     }
 
-    // Fetch positions, intervals, and laps in parallel
-    const [positions, intervals, laps] = await Promise.all([
+    // Fetch positions, intervals, laps, and stints in parallel
+    const [positions, intervals, laps, stints] = await Promise.all([
       F1API.getPositions(session.session_key),
       F1API.getIntervals(session.session_key).catch(() => []),
       F1API.getLaps(session.session_key).catch(() => []),
+      F1API.getStints(session.session_key).catch(() => []),
     ]);
 
     if (!positions || positions.length === 0) {
@@ -864,18 +865,33 @@ async function renderLiveStandingsWidget() {
       });
     }
 
-    // Get best lap and last lap per driver
+    // Get best lap and last lap per driver (track lap number for stint matching)
     const bestLaps = {};
+    const bestLapNumbers = {};
     const lastLaps = {};
     if (laps && laps.length > 0) {
       laps.forEach(lap => {
         if (lap.lap_duration !== null && lap.lap_duration !== undefined) {
           if (!bestLaps[lap.driver_number] || lap.lap_duration < bestLaps[lap.driver_number]) {
             bestLaps[lap.driver_number] = lap.lap_duration;
+            bestLapNumbers[lap.driver_number] = lap.lap_number;
           }
           // Track last lap (laps come chronologically, so last write wins)
           lastLaps[lap.driver_number] = lap.lap_duration;
         }
+      });
+    }
+
+    // Build stint data per driver
+    const latestStints = {};
+    const driverStints = {};
+    if (stints && stints.length > 0) {
+      stints.forEach(s => {
+        // Latest stint per driver (for race = current tyre)
+        latestStints[s.driver_number] = s;
+        // All stints per driver (for matching best lap to compound)
+        if (!driverStints[s.driver_number]) driverStints[s.driver_number] = [];
+        driverStints[s.driver_number].push(s);
       });
     }
 
@@ -894,6 +910,7 @@ async function renderLiveStandingsWidget() {
       const iv = latestIntervals[p.driver_number];
       const best = bestLaps[p.driver_number];
       const last = lastLaps[p.driver_number];
+      const stint = latestStints[p.driver_number];
 
       // Race: interval to car ahead. Practice/Qual: fastest lap + delta to P1.
       let interval = '';
@@ -917,6 +934,25 @@ async function renderLiveStandingsWidget() {
         }
       }
 
+      // Tyre compound: race = current stint, practice/quali = stint during best lap
+      let compound = '';
+      if (hasIntervals) {
+        // Race: show current tyre
+        compound = stint?.compound || '';
+      } else {
+        // Practice/Qualifying: find the stint that covers the best lap
+        const bestLapNum = bestLapNumbers[p.driver_number];
+        const stintsForDriver = driverStints[p.driver_number] || [];
+        if (bestLapNum && stintsForDriver.length > 0) {
+          const matchingStint = stintsForDriver.find(s =>
+            bestLapNum >= s.lap_start && (s.lap_end === null || s.lap_end === undefined || bestLapNum <= s.lap_end)
+          );
+          compound = matchingStint?.compound || stint?.compound || '';
+        } else {
+          compound = stint?.compound || '';
+        }
+      }
+
       return {
         position: p.position,
         driverNumber: p.driver_number,
@@ -928,33 +964,38 @@ async function renderLiveStandingsWidget() {
         interval,
         bestLap: bestLapStr,
         delta,
+        tyre: compound,
       };
     });
 
     // Render all positions — different columns for race vs practice/quali
     const allDrivers = lastPositionsData;
+    const hasTyres = allDrivers.some(d => d.tyre);
 
     if (hasIntervals) {
-      // Race: P | Driver | Interval
+      // Race: P | Driver | Tyre | Interval
       content.innerHTML = `
         <div class="ls-header">
           <div class="ls-pos">P</div>
           <div class="ls-code">Driver</div>
+          ${hasTyres ? '<div class="ls-tyre">Tyre</div>' : ''}
           <div class="ls-interval">Interval</div>
         </div>
       ` + allDrivers.map(d => `
         <div class="ls-row" style="--team-color: ${d.color}">
           <div class="ls-pos">${d.position}</div>
           <div class="ls-code">${d.code}</div>
+          ${hasTyres ? `<div class="ls-tyre"><span class="tyre-badge ${getTyreClass(d.tyre)}">${getTyreLabel(d.tyre)}</span></div>` : ''}
           <div class="ls-interval">${d.interval}</div>
         </div>
       `).join('');
     } else {
-      // Practice/Qualifying: P | Driver | Fastest Lap | Delta
+      // Practice/Qualifying: P | Driver | Tyre | Fastest Lap | Delta
       content.innerHTML = `
         <div class="ls-header">
           <div class="ls-pos">P</div>
           <div class="ls-code">Driver</div>
+          ${hasTyres ? '<div class="ls-tyre">Tyre</div>' : ''}
           <div class="ls-lap">Fastest</div>
           <div class="ls-interval">Delta</div>
         </div>
@@ -962,6 +1003,7 @@ async function renderLiveStandingsWidget() {
         <div class="ls-row" style="--team-color: ${d.color}">
           <div class="ls-pos">${d.position}</div>
           <div class="ls-code">${d.code}</div>
+          ${hasTyres ? `<div class="ls-tyre"><span class="tyre-badge ${getTyreClass(d.tyre)}">${getTyreLabel(d.tyre)}</span></div>` : ''}
           <div class="ls-lap">${d.bestLap}</div>
           <div class="ls-interval">${d.delta}</div>
         </div>
@@ -987,6 +1029,18 @@ function formatLapTime(seconds) {
   return mins > 0 ? `${mins}:${secs.padStart(6, '0')}` : `${secs}s`;
 }
 
+function getTyreLabel(compound) {
+  if (!compound) return '-';
+  const map = { SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTERMEDIATE: 'I', WET: 'W' };
+  return map[compound.toUpperCase()] || compound.charAt(0);
+}
+
+function getTyreClass(compound) {
+  if (!compound) return '';
+  const map = { SOFT: 'tyre-soft', MEDIUM: 'tyre-medium', HARD: 'tyre-hard', INTERMEDIATE: 'tyre-inter', WET: 'tyre-wet' };
+  return map[compound.toUpperCase()] || '';
+}
+
 function openLiveStandingsModal() {
   const modal = document.getElementById('live-standings-modal');
   const grid = document.getElementById('live-standings-full');
@@ -1001,13 +1055,15 @@ function openLiveStandingsModal() {
 
   // Determine mode from data: if any driver has an interval, it's a race
   const isRace = lastPositionsData.some(d => d.interval);
+  const hasTyres = lastPositionsData.some(d => d.tyre);
 
   if (isRace) {
-    // Race: P | Driver | Interval
+    // Race: P | Driver | Tyre | Interval
     grid.innerHTML = `
       <div class="ls-header ls-modal-header">
         <div class="ls-pos">P</div>
         <div class="ls-driver-col">Driver</div>
+        ${hasTyres ? '<div class="ls-tyre">Tyre</div>' : ''}
         <div class="ls-interval">Interval</div>
       </div>
     ` + lastPositionsData.map(d => `
@@ -1020,15 +1076,17 @@ function openLiveStandingsModal() {
             <div class="ls-driver-team">${d.teamName}</div>
           </div>
         </div>
+        ${hasTyres ? `<div class="ls-tyre"><span class="tyre-badge ${getTyreClass(d.tyre)}">${getTyreLabel(d.tyre)}</span></div>` : ''}
         <div class="ls-interval">${d.interval || '-'}</div>
       </div>
     `).join('');
   } else {
-    // Practice/Qualifying: P | Driver | Fastest Lap | Delta
+    // Practice/Qualifying: P | Driver | Tyre | Fastest Lap | Delta
     grid.innerHTML = `
       <div class="ls-header ls-modal-header">
         <div class="ls-pos">P</div>
         <div class="ls-driver-col">Driver</div>
+        ${hasTyres ? '<div class="ls-tyre">Tyre</div>' : ''}
         <div class="ls-lap">Fastest Lap</div>
         <div class="ls-interval">Delta</div>
       </div>
@@ -1042,6 +1100,7 @@ function openLiveStandingsModal() {
             <div class="ls-driver-team">${d.teamName}</div>
           </div>
         </div>
+        ${hasTyres ? `<div class="ls-tyre"><span class="tyre-badge ${getTyreClass(d.tyre)}">${getTyreLabel(d.tyre)}</span></div>` : ''}
         <div class="ls-lap">${d.bestLap || '-'}</div>
         <div class="ls-interval">${d.delta || '-'}</div>
       </div>
