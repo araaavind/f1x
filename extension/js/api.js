@@ -1,18 +1,21 @@
 /**
  * F1 Dashboard - API Client
- * Handles all interactions with the OpenF1 API
+ * Talks to the Firebase backend which proxies OpenF1 & Jolpica APIs.
+ * Data is pre-cached in Firestore by scheduled Cloud Functions.
+ * This client adds a localStorage layer for offline/instant loads.
  */
 
-const API_BASE = 'https://api.openf1.org/v1';
-const JOLPICA_API_BASE = 'https://api.jolpi.ca/ergast/f1';
+// TODO: Replace with your deployed Firebase Functions URL
+const BACKEND_BASE = 'https://us-central1-f1x-backend.cloudfunctions.net';
 
-// Cache configuration
+// Cache configuration (localStorage TTLs — aligned with backend scheduler rates)
 const CACHE_DURATION = {
-  meetings: 2 * 60 * 60 * 1000,      // 2 hours
-  sessions: 60 * 60 * 1000,      // 1 hour
-  drivers: 60 * 60 * 1000,      // 1 hour
-  positions: 10 * 1000,          // 30 seconds (for live data)
-  intervals: 10 * 1000,          // 30 seconds (for live data)
+  meetings: 24 * 60 * 60 * 1000,     // 24 hours  (backend: refreshMeetings every 24h)
+  sessions: 24 * 60 * 60 * 1000,     // 24 hours  (backend: populated by refreshMeetings)
+  drivers: 3 * 60 * 60 * 1000,       // 3 hours   (backend: refreshBaseData every 3h)
+  standings: 2 * 60 * 60 * 1000,     // 2 hours   (backend: refreshStandings every 2h)
+  positions: 60 * 1000,               // 60 seconds (backend: refreshLiveData every 1 min)
+  intervals: 60 * 1000,               // 60 seconds (backend: refreshLiveData every 1 min)
 };
 
 // In-memory cache
@@ -84,75 +87,64 @@ function clearExpiredCache() {
 // Active season state
 let activeSeason = new Date().getFullYear();
 
-// In-flight requests (for deduplication)
-const inFlightRequests = new Map();
+// ---------------------------------------------------------------------------
+// Stale-While-Revalidate background refresh tracking
+// ---------------------------------------------------------------------------
+const pendingRefreshes = new Map(); // cacheKey -> Promise
+let activeRefreshCount = 0;
 
-// Rate limiter configuration
-const RATE_LIMIT_DELAY = 250; // Minimum ms between API requests
-let lastRequestTime = 0;
-const requestQueue = [];
-let isProcessingQueue = false;
-
-/**
- * Process the rate-limited request queue
- */
-async function processRequestQueue() {
-  if (isProcessingQueue) return;
-  isProcessingQueue = true;
-  
-  while (requestQueue.length > 0) {
-    const { url, resolve, reject, fullCacheKey, cacheDuration, cached } = requestQueue.shift();
-    
-    // Ensure minimum delay between requests
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastRequestTime;
-    if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
-      await new Promise(r => setTimeout(r, RATE_LIMIT_DELAY - timeSinceLastRequest));
-    }
-    
-    lastRequestTime = Date.now();
-    
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        if (response.status === 429) {
-          // Rate limited - wait longer and retry
-          console.warn('⚠️ Rate limited, backing off...');
-          await new Promise(r => setTimeout(r, 2000));
-          requestQueue.unshift({ url, resolve, reject, fullCacheKey, cacheDuration, cached });
-          continue;
-        }
-        throw new Error(`API error: ${response.status}`);
-      }
-      const data = await response.json();
-      
-      // Store in cache (in-memory + localStorage)
-      cacheSet(fullCacheKey, { data, timestamp: Date.now() });
-      
-      resolve(data);
-    } catch (error) {
-      console.error('API fetch error:', error);
-      // Return cached data if available, even if expired
-      if (cached) {
-        resolve(cached.data);
-      } else {
-        reject(error);
-      }
-    } finally {
-      // Remove from in-flight requests when done
-      inFlightRequests.delete(fullCacheKey);
-    }
+function bgRefreshStart() {
+  activeRefreshCount++;
+  if (activeRefreshCount === 1) {
+    document.dispatchEvent(new CustomEvent('f1x:bg-refresh-start'));
   }
-  
-  isProcessingQueue = false;
+}
+
+function bgRefreshEnd() {
+  activeRefreshCount = Math.max(0, activeRefreshCount - 1);
+  if (activeRefreshCount === 0) {
+    document.dispatchEvent(new CustomEvent('f1x:bg-refresh-end'));
+  }
 }
 
 /**
- * Fetch data from OpenF1 API with caching and request deduplication
- * Uses rate limiting to prevent 429 errors
+ * Kick off a background fetch for the given cache key.
+ * On success it updates the cache and dispatches an event so widgets can
+ * re-render with the fresh data.  Callers don't need to await this.
  */
-async function fetchAPI(endpoint, params = {}, cacheKey = null, cacheDuration = 60000) {
-  const url = new URL(`${API_BASE}${endpoint}`);
+function backgroundRefresh(url, fullCacheKey) {
+  if (pendingRefreshes.has(fullCacheKey)) return; // already in-flight
+
+  bgRefreshStart();
+
+  const promise = fetch(url)
+    .then(async (response) => {
+      if (!response.ok) return; // silently ignore — stale data is already shown
+      const data = await response.json();
+      cacheSet(fullCacheKey, { data, timestamp: Date.now() });
+      // Notify widgets that fresh data is available
+      document.dispatchEvent(new CustomEvent('f1x:cache-updated', { detail: { key: fullCacheKey } }));
+    })
+    .catch((err) => {
+      console.warn('Background refresh failed:', err);
+    })
+    .finally(() => {
+      pendingRefreshes.delete(fullCacheKey);
+      bgRefreshEnd();
+    });
+
+  pendingRefreshes.set(fullCacheKey, promise);
+}
+
+/**
+ * Fetch data from the F1X backend with localStorage caching.
+ * Uses stale-while-revalidate: if stale data exists it is returned
+ * immediately while a background fetch refreshes the cache.
+ * The backend always serves pre-cached data from Firestore, so no
+ * client-side rate limiting is needed.
+ */
+async function fetchBackend(endpoint, params = {}, cacheKey = null, cacheDuration = 60000) {
+  const url = new URL(`${BACKEND_BASE}/${endpoint}`);
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       url.searchParams.append(key, value);
@@ -160,45 +152,57 @@ async function fetchAPI(endpoint, params = {}, cacheKey = null, cacheDuration = 
   });
 
   const fullCacheKey = cacheKey || url.toString();
-  
-  // Check cache first (in-memory, then localStorage)
+
+  // Check local cache first (in-memory, then localStorage)
   const cached = cacheGet(fullCacheKey);
   if (cached && Date.now() - cached.timestamp < cacheDuration) {
+    // Fresh cache — return immediately
     return cached.data;
   }
 
-  // Check if there's already an in-flight request for this key
-  if (inFlightRequests.has(fullCacheKey)) {
-    return inFlightRequests.get(fullCacheKey);
+  // Stale cache exists — return it immediately & refresh in the background
+  if (cached) {
+    backgroundRefresh(url.toString(), fullCacheKey);
+    return cached.data;
   }
 
-  // Create the request promise using rate-limited queue
-  const requestPromise = new Promise((resolve, reject) => {
-    requestQueue.push({
-      url: url.toString(),
-      resolve,
-      reject,
-      fullCacheKey,
-      cacheDuration,
-      cached
-    });
-    processRequestQueue();
-  });
+  // No cache at all — must fetch synchronously (first load)
+  try {
+    bgRefreshStart();
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      if (response.status === 429) {
+        console.warn('⚠️ Rate limited by backend, using stale cache if available');
+        if (cached) return cached.data;
+      }
+      throw new Error(`Backend error: ${response.status}`);
+    }
 
-  // Store the in-flight request
-  inFlightRequests.set(fullCacheKey, requestPromise);
+    const data = await response.json();
 
-  return requestPromise;
+    // Store in local cache (in-memory + localStorage)
+    cacheSet(fullCacheKey, { data, timestamp: Date.now() });
+
+    return data;
+  } catch (error) {
+    console.error('Backend fetch error:', error);
+    // Return cached data if available, even if expired
+    if (cached) return cached.data;
+    throw error;
+  } finally {
+    bgRefreshEnd();
+  }
 }
 
-/**
- * Get all meetings (Grand Prix weekends) for a year
- */
+// ---------------------------------------------------------------------------
+// API Functions — same public interface as before
+// ---------------------------------------------------------------------------
+
 /**
  * Get all meetings (Grand Prix weekends) for a year
  */
 async function getMeetings(year = activeSeason) {
-  return fetchAPI('/meetings', { year }, `meetings_${year}`, CACHE_DURATION.meetings);
+  return fetchBackend('getMeetings', { year }, `meetings_${year}`, CACHE_DURATION.meetings);
 }
 
 /**
@@ -208,26 +212,26 @@ async function getMeetings(year = activeSeason) {
 async function determineActiveSeason() {
   const currentYear = new Date().getFullYear();
   const now = new Date();
-  
+
   try {
     // Check current year's meetings
     const meetings = await getMeetings(currentYear);
-    
+
     // Find if there are any upcoming races in current year
     const upcoming = meetings.filter(m => new Date(m.date_start) > now);
-    
+
     if (upcoming.length === 0) {
       // Current season is over, check if next year has meetings
       const nextYear = currentYear + 1;
       const nextYearMeetings = await getMeetings(nextYear);
-      
+
       if (nextYearMeetings && nextYearMeetings.length > 0) {
         console.log(`🏁 Season ${currentYear} is over. Switching to ${nextYear}.`);
         activeSeason = nextYear;
         return nextYear;
       }
     }
-    
+
     activeSeason = currentYear;
     return currentYear;
   } catch (e) {
@@ -248,21 +252,21 @@ function getActiveSeason() {
  * Get sessions for a meeting
  */
 async function getSessions(meetingKey) {
-  return fetchAPI('/sessions', { meeting_key: meetingKey }, `sessions_${meetingKey}`, CACHE_DURATION.sessions);
+  return fetchBackend('getSessions', { meeting_key: meetingKey }, `sessions_${meetingKey}`, CACHE_DURATION.sessions);
 }
 
 /**
  * Get all sessions for a year
  */
 async function getSessionsByYear(year = new Date().getFullYear()) {
-  return fetchAPI('/sessions', { year }, `sessions_year_${year}`, CACHE_DURATION.sessions);
+  return fetchBackend('getSessionsByYear', { year }, `sessions_year_${year}`, CACHE_DURATION.sessions);
 }
 
 /**
  * Get drivers for a session
  */
 async function getDrivers(sessionKey) {
-  return fetchAPI('/drivers', { session_key: sessionKey }, `drivers_${sessionKey}`, CACHE_DURATION.drivers);
+  return fetchBackend('getDrivers', { session_key: sessionKey }, `drivers_${sessionKey}`, CACHE_DURATION.drivers);
 }
 
 /**
@@ -270,13 +274,7 @@ async function getDrivers(sessionKey) {
  */
 async function getLatestDrivers() {
   try {
-    // Get the most recent session to get current driver data
-    const sessions = await fetchAPI('/sessions', { session_key: 'latest' }, 'sessions_latest', CACHE_DURATION.sessions);
-    if (sessions && sessions.length > 0) {
-      const latestSession = sessions[0];
-      return fetchAPI('/drivers', { session_key: latestSession.session_key }, `drivers_latest`, CACHE_DURATION.drivers);
-    }
-    return [];
+    return fetchBackend('getLatestDrivers', {}, 'drivers_latest', CACHE_DURATION.drivers);
   } catch (error) {
     console.error('Error getting latest drivers:', error);
     return [];
@@ -287,21 +285,21 @@ async function getLatestDrivers() {
  * Get current positions for a session
  */
 async function getPositions(sessionKey) {
-  return fetchAPI('/position', { session_key: sessionKey }, `positions_${sessionKey}`, CACHE_DURATION.positions);
+  return fetchBackend('getPositions', { session_key: sessionKey }, `positions_${sessionKey}`, CACHE_DURATION.positions);
 }
 
 /**
  * Get intervals (gaps) for a session
  */
 async function getIntervals(sessionKey) {
-  return fetchAPI('/intervals', { session_key: sessionKey }, `intervals_${sessionKey}`, CACHE_DURATION.intervals);
+  return fetchBackend('getIntervals', { session_key: sessionKey }, `intervals_${sessionKey}`, CACHE_DURATION.intervals);
 }
 
 /**
  * Get session results
  */
 async function getSessionResult(sessionKey) {
-  return fetchAPI('/session_result', { session_key: sessionKey }, `result_${sessionKey}`, CACHE_DURATION.meetings);
+  return fetchBackend('getSessionResult', { session_key: sessionKey }, `result_${sessionKey}`, CACHE_DURATION.meetings);
 }
 
 /**
@@ -310,28 +308,28 @@ async function getSessionResult(sessionKey) {
 async function getLaps(sessionKey, driverNumber = null) {
   const params = { session_key: sessionKey };
   if (driverNumber) params.driver_number = driverNumber;
-  return fetchAPI('/laps', params, `laps_${sessionKey}_${driverNumber || 'all'}`, CACHE_DURATION.positions);
+  return fetchBackend('getLaps', params, `laps_${sessionKey}_${driverNumber || 'all'}`, CACHE_DURATION.positions);
 }
 
 /**
  * Get weather data for a session
  */
 async function getWeather(sessionKey) {
-  return fetchAPI('/weather', { session_key: sessionKey }, `weather_${sessionKey}`, CACHE_DURATION.positions);
+  return fetchBackend('getWeather', { session_key: sessionKey }, `weather_${sessionKey}`, CACHE_DURATION.positions);
 }
 
 /**
  * Get race control messages for a session
  */
 async function getRaceControl(sessionKey) {
-  return fetchAPI('/race_control', { session_key: sessionKey }, `race_control_${sessionKey}`, CACHE_DURATION.positions);
+  return fetchBackend('getRaceControl', { session_key: sessionKey }, `race_control_${sessionKey}`, CACHE_DURATION.positions);
 }
 
 /**
  * Get stint data (tyre compounds) for a session
  */
 async function getStints(sessionKey) {
-  return fetchAPI('/stints', { session_key: sessionKey }, `stints_${sessionKey}`, CACHE_DURATION.positions);
+  return fetchBackend('getStints', { session_key: sessionKey }, `stints_${sessionKey}`, CACHE_DURATION.positions);
 }
 
 /**
@@ -339,8 +337,8 @@ async function getStints(sessionKey) {
  */
 async function getLatestSession() {
   try {
-    const sessions = await fetchAPI('/sessions', { session_key: 'latest' }, 'latest_session', 30000);
-    return sessions && sessions.length > 0 ? sessions[0] : null;
+    const data = await fetchBackend('getLatestSession', {}, 'latest_session', CACHE_DURATION.positions);
+    return data || null;
   } catch (error) {
     console.error('Error getting latest session:', error);
     return null;
@@ -365,7 +363,7 @@ async function getUpcomingMeetings() {
   const year = new Date().getFullYear();
   const meetings = await getMeetings(year);
   const now = new Date();
-  
+
   return meetings
     .filter(m => new Date(m.date_start) > now)
     .sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
@@ -558,9 +556,9 @@ const teamLogos = {
 function getTeamLogo(teamName) {
   // Try exact match first
   if (teamLogos[teamName]) return teamLogos[teamName];
-  
+
   // Try partial match
-  const key = Object.keys(teamLogos).find(k => 
+  const key = Object.keys(teamLogos).find(k =>
     teamName.toLowerCase().includes(k.toLowerCase().split(' ')[0]) ||
     k.toLowerCase().includes(teamName.toLowerCase().split(' ')[0])
   );
@@ -573,65 +571,27 @@ function getTeamColor(teamName, apiColor = null) {
 }
 
 /**
- * Fetch driver standings from Jolpica API
- */
-/**
- * Fetch driver standings from Jolpica API
+ * Fetch driver standings from backend
  */
 async function getDriverStandings(year = null) {
   const season = year || activeSeason;
-  const cacheKey = `driver_standings_${season}`;
-  const cached = cacheGet(cacheKey);
-
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION.meetings) {
-    return cached.data;
-  }
-
   try {
-    const response = await fetch(`${JOLPICA_API_BASE}/${season}/driverstandings.json`);
-    if (!response.ok) {
-      throw new Error(`Jolpica API error: ${response.status}`);
-    }
-    const data = await response.json();
-    const standings = data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings || [];
-
-    cacheSet(cacheKey, { data: standings, timestamp: Date.now() });
-    return standings;
+    return fetchBackend('getDriverStandings', { year: season }, `driver_standings_${season}`, CACHE_DURATION.standings);
   } catch (error) {
     console.error('Error fetching driver standings:', error);
-    if (cached) return cached.data;
     return [];
   }
 }
 
 /**
- * Fetch constructor standings from Jolpica API
- */
-/**
- * Fetch constructor standings from Jolpica API
+ * Fetch constructor standings from backend
  */
 async function getConstructorStandings(year = null) {
   const season = year || activeSeason;
-  const cacheKey = `constructor_standings_${season}`;
-  const cached = cacheGet(cacheKey);
-
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION.meetings) {
-    return cached.data;
-  }
-
   try {
-    const response = await fetch(`${JOLPICA_API_BASE}/${season}/constructorstandings.json`);
-    if (!response.ok) {
-      throw new Error(`Jolpica API error: ${response.status}`);
-    }
-    const data = await response.json();
-    const standings = data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
-
-    cacheSet(cacheKey, { data: standings, timestamp: Date.now() });
-    return standings;
+    return fetchBackend('getConstructorStandings', { year: season }, `constructor_standings_${season}`, CACHE_DURATION.standings);
   } catch (error) {
     console.error('Error fetching constructor standings:', error);
-    if (cached) return cached.data;
     return [];
   }
 }
@@ -663,4 +623,3 @@ window.F1API = {
   determineActiveSeason,
   getActiveSeason,
 };
-

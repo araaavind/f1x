@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+functions/node_modules/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+
+# Firebase service account keys (CRITICAL — never commit)
+*-firebase-adminsdk-*.json
+service-account*.json
+serviceAccountKey*.json
+*.pem
+
+# Firebase environment config
+.env
+.env.*
+functions/.env
+functions/.env.*
+.secret.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+functions/lib/
+
+# Logs
+*.log
+npm-debug.log*

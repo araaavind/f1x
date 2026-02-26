@@ -31,7 +31,10 @@
           <img src="logo.png" alt="F1 Logo" class="logo-icon" />
           <div class="logo-text">
             <span class="logo-title">Dashboard</span>
-            <span class="logo-subtitle" id="last-updated">Loading...</span>
+            <span class="logo-subtitle-row">
+              <span class="logo-subtitle" id="last-updated">Loading...</span>
+              <span class="header-spinner" id="header-spinner"></span>
+            </span>
           </div>
         </div>
         <div class="search-container">
@@ -86,9 +89,18 @@
               <rect x="14" y="14" width="7" height="7" />
             </svg>
           </button>
-          <button class="edit-mode-btn hidden" id="available-widgets-btn">Available Widgets</button>
-          <button class="edit-mode-btn hidden" id="reset-layout-navbar-btn">Reset</button>
-          <button class="edit-mode-btn edit-mode-done hidden" id="done-editing-btn">Done</button>
+          <button class="edit-mode-btn hidden" id="available-widgets-btn">
+            Available Widgets
+          </button>
+          <button class="edit-mode-btn hidden" id="reset-layout-navbar-btn">
+            Reset
+          </button>
+          <button
+            class="edit-mode-btn edit-mode-done hidden"
+            id="done-editing-btn"
+          >
+            Done
+          </button>
           <button class="icon-btn" id="settings-btn" title="Settings">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -114,7 +126,14 @@
       <!-- Widget Grid (GridStack) -->
       <div class="widget-grid grid-stack" id="widget-grid">
         <!-- Row 1 -->
-        <div class="grid-stack-item" gs-id="live-session-widget" gs-x="0" gs-y="0" gs-w="13" gs-h="4">
+        <div
+          class="grid-stack-item"
+          gs-id="live-session-widget"
+          gs-x="0"
+          gs-y="0"
+          gs-w="13"
+          gs-h="4"
+        >
           <div class="grid-stack-item-content">
             <div class="widget widget-session" id="live-session-widget">
               <div class="widget-label">SESSION</div>
@@ -125,14 +144,41 @@
           </div>
         </div>
 
-        <div class="grid-stack-item" gs-id="live-standings-widget" gs-x="13" gs-y="0" gs-w="6" gs-h="4">
+        <div
+          class="grid-stack-item"
+          gs-id="live-standings-widget"
+          gs-x="13"
+          gs-y="0"
+          gs-w="6"
+          gs-h="4"
+        >
           <div class="grid-stack-item-content">
-            <div class="widget widget-live-standings" id="live-standings-widget">
+            <div
+              class="widget widget-live-standings"
+              id="live-standings-widget"
+            >
               <div class="widget-label">
                 <span>LIVE STANDINGS</span>
-                <button class="ls-expand-btn" data-action="view-all-standings" title="Expand standings">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
-                    <path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <button
+                  class="ls-expand-btn"
+                  data-action="view-all-standings"
+                  title="Expand standings"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    width="14"
+                    height="14"
+                  >
+                    <path d="M15 3h6v6" />
+                    <path d="M10 14L21 3" />
+                    <path
+                      d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                    />
                   </svg>
                 </button>
               </div>
@@ -143,13 +189,22 @@
           </div>
         </div>
 
-        <div class="grid-stack-item" gs-id="favorites-widget" gs-x="19" gs-y="0" gs-w="5" gs-h="4">
+        <div
+          class="grid-stack-item"
+          gs-id="favorites-widget"
+          gs-x="19"
+          gs-y="0"
+          gs-w="5"
+          gs-h="4"
+        >
           <div class="grid-stack-item-content">
             <div class="widget widget-favorites" id="favorites-widget">
               <div class="widget-label">
                 <span>MY FAVORITES</span>
                 <div class="fav-header-actions">
-                  <button class="btn-link" id="change-driver-btn">Driver</button>
+                  <button class="btn-link" id="change-driver-btn">
+                    Driver
+                  </button>
                   <span class="fav-header-sep">/</span>
                   <button class="btn-link" id="change-team-btn">Team</button>
                 </div>
@@ -168,7 +223,14 @@
         </div>
 
         <!-- Row 2 -->
-        <div class="grid-stack-item" gs-id="driver-standings-widget" gs-x="0" gs-y="4" gs-w="6" gs-h="6">
+        <div
+          class="grid-stack-item"
+          gs-id="driver-standings-widget"
+          gs-x="0"
+          gs-y="4"
+          gs-w="6"
+          gs-h="6"
+        >
           <div class="grid-stack-item-content">
             <div class="widget widget-drivers" id="driver-standings-widget">
               <div class="widget-label">
@@ -182,9 +244,19 @@
           </div>
         </div>
 
-        <div class="grid-stack-item" gs-id="constructor-standings-widget" gs-x="6" gs-y="4" gs-w="6" gs-h="6">
+        <div
+          class="grid-stack-item"
+          gs-id="constructor-standings-widget"
+          gs-x="6"
+          gs-y="4"
+          gs-w="6"
+          gs-h="6"
+        >
           <div class="grid-stack-item-content">
-            <div class="widget widget-constructors" id="constructor-standings-widget">
+            <div
+              class="widget widget-constructors"
+              id="constructor-standings-widget"
+            >
               <div class="widget-label">
                 <span>CONSTRUCTORS</span>
                 <span class="year-badge" id="constructors-year">2026</span>
@@ -196,7 +268,14 @@
           </div>
         </div>
 
-        <div class="grid-stack-item" gs-id="calendar-widget" gs-x="12" gs-y="4" gs-w="6" gs-h="6">
+        <div
+          class="grid-stack-item"
+          gs-id="calendar-widget"
+          gs-x="12"
+          gs-y="4"
+          gs-w="6"
+          gs-h="6"
+        >
           <div class="grid-stack-item-content">
             <div class="widget widget-calendar" id="calendar-widget">
               <div class="widget-label">
@@ -210,7 +289,14 @@
           </div>
         </div>
 
-        <div class="grid-stack-item" gs-id="next-race-widget" gs-x="18" gs-y="4" gs-w="6" gs-h="6">
+        <div
+          class="grid-stack-item"
+          gs-id="next-race-widget"
+          gs-x="18"
+          gs-y="4"
+          gs-w="6"
+          gs-h="6"
+        >
           <div class="grid-stack-item-content">
             <div class="widget widget-countdown" id="next-race-widget">
               <div class="widget-label">NEXT RACE</div>
@@ -221,7 +307,6 @@
           </div>
         </div>
       </div>
-
     </div>
 
     <!-- Settings Modal -->
@@ -247,11 +332,45 @@
             <label>Theme</label>
             <div class="theme-toggle" id="theme-toggle">
               <button class="theme-option active" data-theme="default">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2" />
+                  <path d="M12 20v2" />
+                  <path d="m4.93 4.93 1.41 1.41" />
+                  <path d="m17.66 17.66 1.41 1.41" />
+                  <path d="M2 12h2" />
+                  <path d="M20 12h2" />
+                  <path d="m6.34 17.66-1.41 1.41" />
+                  <path d="m19.07 4.93-1.41 1.41" />
+                </svg>
                 <span>Default</span>
               </button>
               <button class="theme-option" data-theme="wallpaper">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                  <circle cx="9" cy="9" r="2" />
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                </svg>
                 <span>Wallpaper</span>
               </button>
             </div>
@@ -262,23 +381,60 @@
             <div class="form-group">
               <label>Image URL</label>
               <div class="url-input-group">
-                <input type="text" id="wallpaper-url-input" class="form-input" placeholder="Paste image URL..." />
+                <input
+                  type="text"
+                  id="wallpaper-url-input"
+                  class="form-input"
+                  placeholder="Paste image URL..."
+                />
               </div>
             </div>
             <div class="form-group">
               <label>Or Upload Image</label>
               <div class="file-upload-zone" id="file-upload-zone">
-                <input type="file" id="wallpaper-file-input" accept="image/*" hidden />
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                <span class="upload-text">Click to upload or drag &amp; drop</span>
+                <input
+                  type="file"
+                  id="wallpaper-file-input"
+                  accept="image/*"
+                  hidden
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" x2="12" y1="3" y2="15" />
+                </svg>
+                <span class="upload-text"
+                  >Click to upload or drag &amp; drop</span
+                >
                 <span class="upload-hint">JPG, PNG, WebP supported</span>
               </div>
             </div>
             <!-- Wallpaper Preview -->
             <div class="wallpaper-preview" id="wallpaper-preview">
               <img id="wallpaper-preview-img" alt="Wallpaper preview" />
-              <button class="wallpaper-remove-btn" id="wallpaper-remove-btn" title="Remove wallpaper">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+              <button
+                class="wallpaper-remove-btn"
+                id="wallpaper-remove-btn"
+                title="Remove wallpaper"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
               </button>
             </div>
           </div>

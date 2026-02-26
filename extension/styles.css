@@ -258,6 +258,35 @@ body {
   letter-spacing: 0.3px;
 }
 
+.logo-subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Header background-refresh spinner */
+.header-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--f1-red);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.header-spinner.refreshing {
+  opacity: 1;
+  animation: headerSpin 0.8s linear infinite;
+}
+
+@keyframes headerSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Search Bar */
 .search-container {
   flex: 1;

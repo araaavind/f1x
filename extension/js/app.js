@@ -17,6 +17,32 @@ async function initDashboard() {
   // Set up all event listeners first
   setupEventListeners();
 
+  // Wire up background-refresh spinner in the header
+  const spinner = document.getElementById('header-spinner');
+  document.addEventListener('f1x:bg-refresh-start', () => {
+    spinner.classList.add('refreshing');
+  });
+  document.addEventListener('f1x:bg-refresh-end', () => {
+    spinner.classList.remove('refreshing');
+    updateStatus(); // update timestamp when bg refresh completes
+  });
+
+  // When background fetches update the cache, silently re-render widgets
+  document.addEventListener('f1x:cache-updated', () => {
+    // Re-render all widgets with the fresh data (no loading flash —
+    // the DOM swap is near-instant since it's just innerHTML updates)
+    Promise.all([
+      renderNextRaceWidget(),
+      renderFavoriteDriverWidget(),
+      renderFavoriteTeamWidget(),
+      renderLiveSessionWidget(),
+      renderLiveStandingsWidget(),
+      renderDriverStandings(),
+      renderConstructorStandings(),
+      renderCalendarWidget(),
+    ]).catch(err => console.warn('Widget re-render after cache update:', err));
+  });
+
   // Restore wallpaper before anything renders
   await restoreWallpaper();
 
@@ -51,8 +77,9 @@ async function initDashboard() {
     updateStatus('Error loading');
   }
   
-  // Auto-refresh every 5 mins
-  setInterval(refreshDashboard, 5 * 60 * 1000);
+  // Auto-refresh every 60s — aligned with backend live data rate.
+  // Non-live API calls hit longer-TTL caches and return instantly.
+  setInterval(refreshDashboard, 60 * 1000);
 }
 
 function setupEventListeners() {
